@@ -63,13 +63,14 @@ interTrlInterval = 1;                                                      % Int
 fixationDur = 0.5;                                                         % Fixation duration in seconds
 stimOrientations = linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
-stimLoc_y = 3.2;                                                             % Stimulus location in visual field degrees
-stimDur = [0.5, 0.5];                                                      % Stimulus duration in seconds
-stimSpread = [5, 30];                                                       % Stimulus spread in degrees
-stimContrast = [0.01, 0.12];                                                 % Stimulus contrast levels
+stimLoc_y = 4.5;                                                             % Stimulus location in visual field degrees
+stimDur = [0.015, 0.015];  %0.5                                                    % Stimulus duration in seconds
+stimSpread = [5, 5]; % 45                                                       % Stimulus spread in degrees
+% stimContrast = [0.015, 0.05];                                                 % Stimulus contrast levels
+stimContrast = [0.05, 0.05];
 respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 8;                                                           % Number of blocks 
+numBlocks   = 2;                                                           % Number of blocks 
 nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
@@ -244,7 +245,8 @@ try
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
         
-        for trialIDx=1:nTrialsPerBlock
+        % for trialIDx=1:nTrialsPerBlock
+        for trialIDx=1:10
         
             % === Fetch the trial configuration from the dat file ===
             trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
@@ -288,7 +290,7 @@ try
             % Wait untill subject maintains fixation
             fixationHeld = true;
             
-            fixationHeld = checkFixation(psychToolBoxConfig, eyeUsed, fixationWinCfg.fixThreshold, ...
+            [fixationHeld, eyeUsed] = checkFixation(psychToolBoxConfig, eyeUsed, fixationWinCfg.fixThreshold, ...
                 fixnData.tStart, trlCfg.fixationDur, ...
                 psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, psychToolBoxConfig.quitKey, ...
                 checkFixationMaxDur);
@@ -885,8 +887,8 @@ while 1
                 % If no stable fixation is achieved within 2 seconds then
                 % abort
                 % if (tStartCheckFixation - tStart) > checkFixationMaxDur
-                %    fixationHeld = false;
-                %    break
+                %   % Show warning that some problem with fixation
+                %   
                 % end
             end
         end
@@ -901,9 +903,20 @@ end
 %% Show response screen
 function respData = showResponseScreen(psychToolBoxConfig, fixationWinCfg, trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur)
 
+arcRadi1 = 3.5;
+arcRadi2 = 5.5;
+
+% if rand > 0.5
+%     arcRadi1 = 3.5;
+%     arcRadi2 = 5.5;
+% else
+%     arcRadi1 = 5.5;
+%     arcRadi2 = 3.5;
+% end
+
 % Two arcs
-arcRadiusRed   = 5 * psychToolBoxConfig.ppd;
-arcRadiusGreen = 7 * psychToolBoxConfig.ppd;
+arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
+arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
 arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
 
 % Initialize

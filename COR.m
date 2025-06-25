@@ -59,17 +59,21 @@ end
 % Add instruction screen
 
 %% Table
+% Extreme values
+% Contrast 0.015, duration 0.06, loc 4.5, spread 5
+% Contrast 0.018, duration 0.06, loc 4.5, spread 45 
 interTrlInterval = 1;                                                      % Inter trial interval in seconds
 fixationDur = 0.5;                                                         % Fixation duration in seconds
 stimOrientations = linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
-stimLoc_y = 3.2;                                                             % Stimulus location in visual field degrees
-stimDur = [0.5, 0.5];                                                      % Stimulus duration in seconds
-stimSpread = [5, 45];                                                       % Stimulus spread in degrees
-stimContrast = [0.01, 0.12];                                                 % Stimulus contrast levels
+stimLoc_y = 4.5;                                                             % Stimulus location in visual field degrees
+stimDur = [0.2, 0.2];  %0.15 0.5. 0.14 is  the minimum                                                    % Stimulus duration in seconds
+stimSpread = [45, 45]; % 45                                                       % Stimulus spread in degrees
+% stimContrast = [0.015, 0.05];                                                 % Stimulus contrast levels
+stimContrast = [0.018, 0.018]; %0.018
 respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 6;                                                           % Number of blocks 
+numBlocks   = 2;                                                           % Number of blocks 
 nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
@@ -244,7 +248,8 @@ try
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
         
-        for trialIDx=1:nTrialsPerBlock
+        % for trialIDx=1:nTrialsPerBlock
+        for trialIDx=1:10
         
             % === Fetch the trial configuration from the dat file ===
             trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
@@ -901,9 +906,20 @@ end
 %% Show response screen
 function respData = showResponseScreen(psychToolBoxConfig, fixationWinCfg, trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur)
 
+arcRadi1 = 3.5;
+arcRadi2 = 5.5;
+
+% if rand > 0.5
+%     arcRadi1 = 3.5;
+%     arcRadi2 = 5.5;
+% else
+%     arcRadi1 = 5.5;
+%     arcRadi2 = 3.5;
+% end
+
 % Two arcs
-arcRadiusRed   = 5 * psychToolBoxConfig.ppd;
-arcRadiusGreen = 7 * psychToolBoxConfig.ppd;
+arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
+arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
 arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
 
 % Initialize
