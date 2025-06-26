@@ -23,51 +23,84 @@ dummymode = 0; % variable for eyelink usage. (1 for not using eye-tracking)
 
 %% Initialize the script
 % Experiment information
-% TODO: take subject name and uniquely generate the session no
-answer = str2double(inputdlg({'Subject number:','Session number:'},'Experiment Information')); % subject number = 0 for pilot
+
+answer = str2double(inputdlg({'Subject ID:'}, 'Experiment Information')); % subject number = 0 for pilot
 if sum(isnan(answer))
     error('Invalid input.')
 end
 subjectNum = answer(1);
-sessionNum = answer(2);
+sessionNum = 1;          % Default value of session number
 
 % Name the .mat file
 matFile = ['COR' num2str(subjectNum,'%.2d') '.mat'];
 
-% Check for incorrect input
-if subjectNum ~= 0 % not a pilot
-    if sessionNum == 1 
-        % This is the first session but the file exists
-        if ~isempty(dir(matFile)) 
-            error('Incorrect subject or session number.')
+% 1. If file exist 
+%   - Get last run session i.e. 2 
+%   - if there are remaining trials in last run session then ask user and run that
+%     session again for the remaining trials
+%   - if all the trials are completed then ask the user if they want to run
+%     new session for this subject
+% 2. If file does not exist then just take the subject number and initialize
+%    session to 1
+if ~isempty(dir(matFile)) % File exist
+    % Load table from the previous session
+    load(matFile)
+
+    lastRunSessionNum = max(dat.session(:));
+    remainingTrilsInLastRun = numel( find( (dat.session == lastRunSessionNum) & (dat.trialStatus == 0) ) );
+
+    if isnan(lastRunSessionNum) && lastRunSessionNum > 0
+        error('Something weird! Last run session num is nan.')
+    end
+    
+    % There are still some remaining trials in last run. Ask user if they
+    % want to continue with the last session or create a new one
+    if remainingTrilsInLastRun > 0
+        choice = questdlg(sprintf(['%d trials still needs to be completed from the last session! Do you want to' ...
+            ' continue with the previous session or create a new one?'], remainingTrilsInLastRun), ...
+            'Confirm', 'Continue', 'New', 'Continue');
+
+        if strcmp(choice, 'Continue')
+            sessionNum = lastRunSessionNum; % Continue with previous session
+        elseif strcmp(choice, 'New')
+            sessionNum = lastRunSessionNum + 1; % Create new session
+        else
+            error('Make a selection!')
         end
-    else
-        % This is not the first session but the file does not exist
-        if isempty(dir(matFile)) 
-            error('You''ve skipped the first session.')
-        end
-        % Load table from the previous session
-        load(matFile)
-        % There exists data from this session
-        if sum( dat.session == sessionNum )
-            error('You''ve already done this session.')
+        
+    else % No remaining trials. Continue with new sessions for this user
+        choice = questdlg(['A session already exist for this subject. ' ...
+            'Do you want to continue with a new session?'], ...
+            'Confirm', 'Yes', 'No', 'No');
+
+        if strcmp(choice, 'Yes')
+            sessionNum = lastRunSessionNum + 1; % Continue with previous session
+        elseif strcmp(choice, 'No')
+            error('Nothing to do here! Exiting!')
+        else
+            error('Make a selection!')
         end
     end
+
+else % File does not exist
+    sessionNum = 1; % Running new session
 end
 
-% TODO: maybe create a different file for different session
 % Add instruction screen
 
 %% Table
+% Extreme values
+% Contrast 0.015, duration 0.06, loc 4.5, spread 5
+% Contrast 0.018, duration 0.06, loc 4.5, spread 45 
 interTrlInterval = 1;                                                      % Inter trial interval in seconds
 fixationDur = 0.5;                                                         % Fixation duration in seconds
 stimOrientations = linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
 stimLoc_y = 4.5;                                                             % Stimulus location in visual field degrees
-stimDur = [0.015, 0.015];  %0.5                                                    % Stimulus duration in seconds
-stimSpread = [5, 5]; % 45                                                       % Stimulus spread in degrees
+stimDur = [0.2, 0.2];  %0.15 0.5. 0.14 is  the minimum                                                    % Stimulus duration in seconds
+stimSpread = [45, 45]; % 45                                                       % Stimulus spread in degrees
 % stimContrast = [0.015, 0.05];                                                 % Stimulus contrast levels
-stimContrast = [0.05, 0.05];
+stimContrast = [0.018, 0.018]; %0.018
 respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
 numBlocks   = 2;                                                           % Number of blocks 
@@ -79,8 +112,6 @@ durFeedbackFixBreak = .5;
 checkFixationMaxDur = 2;
 respScreenGazeHoldDur = 0.2;
 trlStatus = 0;                                                             % 0 for not completed yet, 1 for successful completion
-
-% TODO: handle scenario when the same subject runs session the next day
 
 % Simple vectors
 subjectVec    = subjectNum*ones(nTrials,1);
@@ -121,49 +152,62 @@ rewardVec              = nan(nTrials,1);
 respTimeVec            = nan(nTrials,1);
 
 
+if ~exist('dat', 'var') % Data file does not exist, most likely first session
+    % Finalize the table
+    variableNames = {...
+        'subject','session','block','trial', 'ITI',... % TODO: experiment information
+        'fixationDur', 'stimLocX', 'stimLocY', 'stimDur', 'stimOri', 'stimSpread', 'stimContrast',... % TODO: independent and confounding variables
+        'stimSampleMeanOri', 'stimSampleSpread', ...
+        'respMaxDur', 'reportedOri','reportedConf','reward','reactionTime', ... % TODO: dependent variables
+        'trialStatus'
+        };
+    
+    dat = table( ...
+            subjectVec, sessionVec, blockVec, trialVec, itiVec, ...
+            fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
+            stimSampleMeanOriVec, stimSampleSpreadVec, ...
+            respMaxDurVec, reportedOriVec, reportedConfVec, rewardVec, respTimeVec, ...
+            trlStatusVec, ...
+            'VariableNames', variableNames ...
+        );
+    
+    description = table(categorical(...
+        {...
+        'subject number';...
+        'session number (within each subject)';...
+        'block number (within each session)';...
+        'trial number (within each block)';...
+        'Inmter trial Interval (in seconds)';...
+        'fixation duration (in seconds)';...
+        'Stimulus duration (in seconds)';...
+        'stimulus location: (x) location in visual degrees';...
+        'stimulus location (y) location in visual degrees'
+        'Stimulus orientation (in degree)';...
+        'Stimulus spread (in degrees) - dispersion';...
+        'stimulus RMS contrast [sigma]';...
+        'sample average orientation (in degree) - sample avg on each trial might be slightly different from actual stimulus orientation used by generative process';...
+        'sample orientation spread (in degree) - sample spread on each trial might be slightly different from actual spread used by generative process';...
+        'Maximum duration for which response window is shown (in s)';...
+        'Reported orientation (in deg)';...
+        'Reported confidence (1: Confident (HC), 0: Not confident(LC))';...
+        'Reward earned on this trial';...
+        'Reaction time (time interval between onset of response screen and choice commit) (in s)';...
+        'Trial status - whether trial is completed or not'; ...
+        }),...
+        'VariableNames',{'description'},'RowNames',variableNames');
 
-% Finalize the table
-variableNames = {...
-    'subject','session','block','trial', 'ITI',... % TODO: experiment information
-    'fixationDur', 'stimLocX', 'stimLocY', 'stimDur', 'stimOri', 'stimSpread', 'stimContrast',... % TODO: independent and confounding variables
-    'stimSampleMeanOri', 'stimSampleSpread', ...
-    'respMaxDur', 'reportedOri','reportedConf','reward','reactionTime', ... % TODO: dependent variables
-    'trialStatus'
-    };
-
-dat = table( ...
+else % dat file already exists
+    newData = table( ...
         subjectVec, sessionVec, blockVec, trialVec, itiVec, ...
         fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
         stimSampleMeanOriVec, stimSampleSpreadVec, ...
         respMaxDurVec, reportedOriVec, reportedConfVec, rewardVec, respTimeVec, ...
         trlStatusVec, ...
-        'VariableNames', variableNames ...
+        'VariableNames', dat.Properties.VariableNames ...
     );
-
-description = table(categorical(...
-    {...
-    'subject number';...
-    'session number (within each subject)';...
-    'block number (within each session)';...
-    'trial number (within each block)';...
-    'Inmter trial Interval (in seconds)';...
-    'fixation duration (in seconds)';...
-    'Stimulus duration (in seconds)';...
-    'stimulus location: (x) location in visual degrees';...
-    'stimulus location (y) location in visual degrees'
-    'Stimulus orientation (in degree)';...
-    'Stimulus spread (in degrees) - dispersion';...
-    'stimulus RMS contrast [sigma]';...
-    'sample average orientation (in degree) - sample avg on each trial might be slightly different from actual stimulus orientation used by generative process';...
-    'sample orientation spread (in degree) - sample spread on each trial might be slightly different from actual spread used by generative process';...
-    'Maximum duration for which response window is shown (in s)';...
-    'Reported orientation (in deg)';...
-    'Reported confidence (1: Confident (HC), 0: Not confident(LC))';...
-    'Reward earned on this trial';...
-    'Reaction time (time interval between onset of response screen and choice commit) (in s)';...
-    'Trial status - whether trial is completed or not'; ...
-    }),...
-    'VariableNames',{'description'},'RowNames',variableNames');
+    
+    dat = [dat; newData];  % Append new rows to the existing table
+end
 
 %% Reward
 baselineReward = 10; % If done over multiple session, then this should probably be reloaded from the previous session
@@ -232,9 +276,11 @@ try
     % 
     %     end
     % end
-
+    
     for blockIDx=1:numBlocks
         
+        tStartBlock = GetSecs;
+
         % Calibrate eyelink at start of each block
         eyeUsed = setupEyeLink(psychToolBoxConfig.w);
         
@@ -242,15 +288,29 @@ try
         beginExpScreen(psychToolBoxConfig)
         Eyelink('Message','START');
 
+        % Get total number of completed trials in current block and session
+        nCompletedTrialsCurrBlock = numel( find( (dat.session == sessionNum) & ...
+            (dat.block == blockIDx) & (dat.trialStatus == 1) ) ); 
+        fprintf("Completed trial in this block %d / %d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock)
+        
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
         
-        % for trialIDx=1:nTrialsPerBlock
-        for trialIDx=1:10
-        
+        while nCompletedTrialsCurrBlock < nTrialsPerBlock
+        % while nCompletedTrialsCurrBlock < 10
+            
+        % This is wrong. Get first not completed trial
+            trialIDx = nCompletedTrialsCurrBlock + 1;
+
             % === Fetch the trial configuration from the dat file ===
             trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
             trlCfg = dat( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx), :);
+            
+            % Just to confirm, make sure that trial status is not completed
+            if trlCfg.trialStatus == 1
+                error("!!!! Trial already done!!!! " + ...
+                    "Ideally the control should never go here! Bug somewhere.")
+            end
             
             % === Generate stimuli ===
             % This done for each trial But do it even before
@@ -278,7 +338,7 @@ try
             % Calculate dispersion and mean orientation for the sample
             % stimuli
             stimMetrics = calcStimMetrics(stimParam.movie);
-            fprintf("Actual Stim: angle = %.2f, stdev = %.2f \n", trlCfg.stimOri, trlCfg.stimSpread);
+            % fprintf("Actual Stim: angle = %.2f, stdev = %.2f \n", trlCfg.stimOri, trlCfg.stimSpread);
             
             % Inter trial interval - Do whateven preperation needs to be
             % done before this ITI
@@ -287,22 +347,11 @@ try
             % === Fixation point ====
             fixnData = showFixation(psychToolBoxConfig, fixationWinCfg);
             
-            % Wait untill subject maintains fixation
-            fixationHeld = true;
-            
+            % Wait indefinately untill subject maintains fixation
             [fixationHeld, eyeUsed] = checkFixation(psychToolBoxConfig, eyeUsed, fixationWinCfg.fixThreshold, ...
                 fixnData.tStart, trlCfg.fixationDur, ...
                 psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, psychToolBoxConfig.quitKey, ...
                 checkFixationMaxDur);
-            
-            if ~fixationHeld
-                % TODO: set info in dat file
-                % Maye show trial aborted screen as well
-                abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
-                % Everytime trial is aborted, update the timer for ITI calculation
-                [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w); 
-                continue;
-            end
             
             % === Stimulus Phase ===
             fixationHeld = true;
@@ -337,7 +386,15 @@ try
             end
             
             if ~fixationHeld
-                % TODO: set info in dat file
+                % Append the current trial to the end of the block. Swap 
+                % the current trial at the "end of the block" for current
+                % session only
+                blockIdxes = find( (dat.session == sessionNum) & (dat.block == blockIDx) );
+                blockEndIdx = blockIdxes(end);
+                currTrlIdx = trlCfgIdx;
+                dat = [ dat( [1:currTrlIdx - 1, currTrlIdx + 1:blockEndIdx], :); 
+                    dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ];
+                
                 abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
                 % Everytime trial is aborted, update the timer for ITI calculation
                 [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w);
@@ -350,7 +407,16 @@ try
                 trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur);
             
             if ~respData.responseGiven
-                % TODO: set info in dat file
+                % Append the current trial to the end of the block. Swap 
+                % the current trial at the "end of the block" for current
+                % session only
+                blockIdxes = find( (dat.session == sessionNum) & (dat.block == blockIDx) );
+                blockEndIdx = blockIdxes(end);
+                currTrlIdx = trlCfgIdx;
+                dat = [ dat( [1:currTrlIdx - 1, currTrlIdx + 1:blockEndIdx], :); 
+                    dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ];
+                
+                % Show error text
                 DrawFormattedText(psychToolBoxConfig.w, 'Timeout occured while waiting for response', ...
                     'center', 'center',[255 0 0]);
                 Screen('Flip', psychToolBoxConfig.w);
@@ -400,22 +466,47 @@ try
             dat.reactionTime(trlCfgIdx)       = respData.reactionTime;
             dat.trialStatus(trlCfgIdx)        = 1; % This trial was completed
             
+            % Update number of completed trials in this block
+            nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
+            
         end
 
         % End of block related operations
-        
-        % Send event to eyelink
-        Eyelink('Message', 'END');
-    
-        % Stop recording
-        Eyelink('StopRecording');
+        Eyelink('Message', 'END'); % Send event to eyelink
+        Eyelink('StopRecording'); % Stop recording
     
         % Close the .edf file
         WaitSecs(1);
         Eyelink('CloseFile');
 
-        % TODO: save info and print block stats
-        endOfBlockScreen(psychToolBoxConfig)
+        
+        % Save info and print block stats
+        thisBlockData = dat( (dat.session == sessionNum) & (dat.block == blockIDx), :);
+        stimOri = thisBlockData.stimOri; reportedOri = thisBlockData.reportedOri;
+        
+        absErr = abs(stimOri - reportedOri);
+        absOriError = min(absErr, 180 - absErr);  % ensures error is in [0, 90]
+        rawError = stimOri - reportedOri;
+        rawOriError = mod(rawError + 90, 180) - 90;
+        
+        thisBlockData.absOriError = absOriError;
+        thisBlockData.rawOriError = rawOriError;
+        
+        summaryTable1 = groupsummary(thisBlockData, {'reportedConf'}, ...
+                            {@(x) sqrt(nanmean(x.^2)), 'mean', 'std', 'numel'}, 'rawOriError');
+
+        summaryTable2 = groupsummary(thisBlockData, {'reportedConf'}, ...
+                                    {'mean', 'std', 'numel'}, 'absOriError');
+
+
+        fprintf("Block duration %.2fs \n", GetSecs - tStartBlock);
+        fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
+        fprintf('Current total reward: $%.2f \n', currentTotalReward);
+        disp(tableSummary1)
+        disp(tableSummary2)
+
+        save(matFile,'dat', 'description'); % Save info
+        endOfBlockScreen(psychToolBoxConfig) % Show waiting screen
 
     end
     
@@ -845,7 +936,7 @@ stimMetrics.meanAngle = meanAngle;
 stimMetrics.stdAngle = stdAngle;
 
 % DEBUG
-fprintf("Stim metrics: sampleAngle = %.2f, sampleStdDev = %.2f \n", meanAngle, stdAngle)
+% fprintf("Stim metrics: sampleAngle = %.2f, sampleStdDev = %.2f \n", meanAngle, stdAngle)
 end
 
 %% Check fixation 
@@ -879,10 +970,12 @@ while 1
                 
                 % Eyelink sucks! Just calibrate again to avoid eyelink
                 % problems.
-                if keyCode(psychToolBoxConfig.calibrateKey)
-                    % Eye used needs to be updated
-                    eyeUsed = setupEyeLink(psychToolBoxConfig.w);
-                end
+                % if keyCode(psychToolBoxConfig.calibrateKey)
+                %     % Eye used needs to be updated
+                %     eyeUsed = setupEyeLink(psychToolBoxConfig.w);
+                % 
+                %     % Do i need to draw fixation screen again?
+                % end
                 
                 % If no stable fixation is achieved within 2 seconds then
                 % abort
@@ -1028,7 +1121,7 @@ end
 confReport = NaN;
 
 if responseGiven
-    fprintf("Reported ARC %s \n", reportedArc)
+    % fprintf("Reported ARC %s \n", reportedArc)
     if reportedArc == "green"
         confReport = 1;
     elseif reportedArc == "red"

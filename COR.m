@@ -37,12 +37,11 @@ matFile = ['COR' num2str(subjectNum,'%.2d') '.mat'];
 % 1. If file exist 
 %   - Get last run session i.e. 2 
 %   - if there are remaining trials in last run session then ask user and run that
-%   session again for the remaining trials
+%     session again for the remaining trials
 %   - if all the trials are completed then ask the user if they want to run
-%   new session for this subject
-% If file does not exist then just take the subject number and initialize
-% session to 1
-
+%     new session for this subject
+% 2. If file does not exist then just take the subject number and initialize
+%    session to 1
 if ~isempty(dir(matFile)) % File exist
     % Load table from the previous session
     load(matFile)
@@ -57,7 +56,7 @@ if ~isempty(dir(matFile)) % File exist
     % There are still some remaining trials in last run. Ask user if they
     % want to continue with the last session or create a new one
     if remainingTrilsInLastRun > 0
-        choice = questdlg(sprintf(['%d trials still needs to be completed from last session! Do you want to' ...
+        choice = questdlg(sprintf(['%d trials still needs to be completed from the last session! Do you want to' ...
             ' continue with the previous session or create a new one?'], remainingTrilsInLastRun), ...
             'Confirm', 'Continue', 'New', 'Continue');
 
@@ -292,13 +291,15 @@ try
         % Get total number of completed trials in current block and session
         nCompletedTrialsCurrBlock = numel( find( (dat.session == sessionNum) & ...
             (dat.block == blockIDx) & (dat.trialStatus == 1) ) ); 
+        fprintf("Completed trial in this block %d / %d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock)
         
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
         
-        while nCompletedTrials < nTrialsPerBlock
+        while nCompletedTrialsCurrBlock < nTrialsPerBlock
         % while nCompletedTrialsCurrBlock < 10
             
+            % This is wrong. Get first not completed trial
             trialIDx = nCompletedTrialsCurrBlock + 1;
 
             % === Fetch the trial configuration from the dat file ===
@@ -498,9 +499,9 @@ try
                                     {'mean', 'std', 'numel'}, 'absOriError');
 
 
-        fprintf("Block duration %.2fs", GetSecs - tStartBlock);
-        fprintf("Completed trials %d/%d", nCompletedTrialsCurrBlock, nTrialsPerBlock);
-        fprintf('Current total reward: $%.2f\n', currentTotalReward);
+        fprintf("Block duration %.2fs \n", GetSecs - tStartBlock);
+        fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
+        fprintf('Current total reward: $%.2f \n', currentTotalReward);
         disp(tableSummary1)
         disp(tableSummary2)
 
