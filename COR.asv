@@ -296,8 +296,8 @@ try
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
         
-        while nCompletedTrials < nTrialsPerBlock
-        % while nCompletedTrialsCurrBlock < 10
+        % while nCompletedTrials < nTrialsPerBlock
+        while nCompletedTrialsCurrBlock < 10
             
             trialIDx = nCompletedTrialsCurrBlock + 1;
 
@@ -480,32 +480,14 @@ try
 
         
         % Save info and print block stats
-        thisBlockData = dat( (dat.session == sessionNum) & (dat.block == blockIDx), :);
-        stimOri = thisBlockData.stimOri; reportedOri = thisBlockData.reportedOri;
-        
-        absErr = abs(stimOri - reportedOri);
-        absOriError = min(absErr, 180 - absErr);  % ensures error is in [0, 90]
-        rawError = stimOri - reportedOri;
-        rawOriError = mod(rawError + 90, 180) - 90;
-        
-        thisBlockData.absOriError = absOriError;
-        thisBlockData.rawOriError = rawOriError;
-        
-        summaryTable1 = groupsummary(thisBlockData, {'reportedConf'}, ...
-                            {@(x) sqrt(nanmean(x.^2)), 'mean', 'std', 'numel'}, 'rawOriError');
-
-        summaryTable2 = groupsummary(thisBlockData, {'reportedConf'}, ...
-                                    {'mean', 'std', 'numel'}, 'absOriError');
-
-
         fprintf("Block duration %.2fs", GetSecs - tStartBlock);
         fprintf("Completed trials %d/%d", nCompletedTrialsCurrBlock, nTrialsPerBlock);
         fprintf('Current total reward: $%.2f\n', currentTotalReward);
-        disp(tableSummary1)
-        disp(tableSummary2)
+        groupsummary(dat, {'reportedConf'}, {'mean', 'std', 'numel'}, 'stimOri' - 'reportedOri')
 
-        save(matFile,'dat', 'description'); % Save info
-        endOfBlockScreen(psychToolBoxConfig) % Show waiting screen
+        save(matFile,'dat', 'description');
+        
+        endOfBlockScreen(psychToolBoxConfig)
 
     end
     
