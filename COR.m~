@@ -30,6 +30,7 @@ if sum(isnan(answer))
 end
 subjectNum = answer(1);
 sessionNum = 1;          % Default value of session number
+newSession = true;
 
 % Name the .mat file
 matFile = ['COR' num2str(subjectNum,'%.2d') '.mat'];
@@ -62,8 +63,10 @@ if ~isempty(dir(matFile)) % File exist
 
         if strcmp(choice, 'Continue')
             sessionNum = lastRunSessionNum; % Continue with previous session
+            newSession = false;
         elseif strcmp(choice, 'New')
             sessionNum = lastRunSessionNum + 1; % Create new session
+            newSession = true;
         else
             error('Make a selection!')
         end
@@ -74,7 +77,8 @@ if ~isempty(dir(matFile)) % File exist
             'Confirm', 'Yes', 'No', 'No');
 
         if strcmp(choice, 'Yes')
-            sessionNum = lastRunSessionNum + 1; % Continue with previous session
+            sessionNum = lastRunSessionNum + 1; % Start new session
+            newSession = true;
         elseif strcmp(choice, 'No')
             error('Nothing to do here! Exiting!')
         else
@@ -289,9 +293,14 @@ try
         Eyelink('Message','START');
 
         % Get total number of completed trials in current block and session
-        nCompletedTrialsCurrBlock = numel( find( (dat.session == sessionNum) & ...
-            (dat.block == blockIDx) & (dat.trialStatus == 1) ) ); 
+        thisBlockData = find( (dat.session == sessionNum) & ...
+            (dat.block == blockIDx) & (dat.trialStatus == 1) );
+        nCompletedTrialsCurrBlock = numel( thisBlockData ); 
         fprintf("Completed trial in this block %d / %d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock)
+        
+        % Set current cursor at first not completed trial
+        currTrlCursor = find( (dat.session == sessionNum) & ...
+            (dat.block == blockIDx) & (dat.trialStatus == 0) , 1 );
         
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
@@ -299,12 +308,21 @@ try
         while nCompletedTrialsCurrBlock < nTrialsPerBlock
         % while nCompletedTrialsCurrBlock < 10
             
-        % This is wrong. Get first not completed trial
-            trialIDx = nCompletedTrialsCurrBlock + 1;
-
             % === Fetch the trial configuration from the dat file ===
-            trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
-            trlCfg = dat( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx), :);
+            trlCfgIdx = currTrlCursor;
+            trlCfg = dat(trlCfgIdx, :);
+            
+            % Just do a sanity check to make sure this is a correct row.
+            % Ideally this should always be false (i.e. no error)
+            if (trlCfg.session ~= sessionNum) || (trlCfg.block ~= blockIDx)
+                fprintf("Session: %d, %d; Block IDx: %d, %d", ...
+                    trlCfg.session, sessionNum, trlCfg.block, blockIDx);
+                error("Mismatched session num or block idx!")
+            end
+            
+            % % === Fetch the trial configuration from the dat file ===
+            % trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
+            % trlCfg = dat( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx), :);
             
             % Just to confirm, make sure that trial status is not completed
             if trlCfg.trialStatus == 1
@@ -393,7 +411,12 @@ try
                 blockEndIdx = blockIdxes(end);
                 currTrlIdx = trlCfgIdx;
                 dat = [ dat( [1:currTrlIdx - 1, currTrlIdx + 1:blockEndIdx], :); 
-                    dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ];
+                    dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ]; % Test edge cases
+                
+                % Sanity check
+                if numel(dat(:,1)) > numBlocks*nTrialsPerBlock
+                    error("Block length greater than what it should be!")
+                end
                 
                 abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
                 % Everytime trial is aborted, update the timer for ITI calculation
@@ -415,6 +438,11 @@ try
                 currTrlIdx = trlCfgIdx;
                 dat = [ dat( [1:currTrlIdx - 1, currTrlIdx + 1:blockEndIdx], :); 
                     dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ];
+                
+                % Sanity check
+                if numel(dat(:,1)) > numBlocks*nTrialsPerBlock
+                    error("Block length greater than what it should be!")
+                end
                 
                 % Show error text
                 DrawFormattedText(psychToolBoxConfig.w, 'Timeout occured while waiting for response', ...
@@ -468,6 +496,7 @@ try
             
             % Update number of completed trials in this block
             nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
+            currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
         end
 

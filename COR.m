@@ -30,6 +30,7 @@ if sum(isnan(answer))
 end
 subjectNum = answer(1);
 sessionNum = 1;          % Default value of session number
+newSession = true;
 
 % Name the .mat file
 matFile = ['COR' num2str(subjectNum,'%.2d') '.mat'];
@@ -62,8 +63,10 @@ if ~isempty(dir(matFile)) % File exist
 
         if strcmp(choice, 'Continue')
             sessionNum = lastRunSessionNum; % Continue with previous session
+            newSession = false;
         elseif strcmp(choice, 'New')
             sessionNum = lastRunSessionNum + 1; % Create new session
+            newSession = true;
         else
             error('Make a selection!')
         end
@@ -74,7 +77,8 @@ if ~isempty(dir(matFile)) % File exist
             'Confirm', 'Yes', 'No', 'No');
 
         if strcmp(choice, 'Yes')
-            sessionNum = lastRunSessionNum + 1; % Continue with previous session
+            sessionNum = lastRunSessionNum + 1; % Start new session
+            newSession = true;
         elseif strcmp(choice, 'No')
             error('Nothing to do here! Exiting!')
         else
@@ -84,6 +88,7 @@ if ~isempty(dir(matFile)) % File exist
 
 else % File does not exist
     sessionNum = 1; % Running new session
+    newSession = true;
 end
 
 % Add instruction screen
@@ -196,7 +201,7 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
         }),...
         'VariableNames',{'description'},'RowNames',variableNames');
 
-else % dat file already exists
+elseif newSession % dat file already exists and this is a new session
     newData = table( ...
         subjectVec, sessionVec, blockVec, trialVec, itiVec, ...
         fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
@@ -407,7 +412,12 @@ try
                 blockEndIdx = blockIdxes(end);
                 currTrlIdx = trlCfgIdx;
                 dat = [ dat( [1:currTrlIdx - 1, currTrlIdx + 1:blockEndIdx], :); 
-                    dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ];
+                    dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ]; % Test edge cases
+                
+                % Sanity check
+                if numel(dat(:,1)) > numBlocks*nTrialsPerBlock
+                    error("Block length greater than what it should be!")
+                end
                 
                 abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
                 % Everytime trial is aborted, update the timer for ITI calculation
@@ -429,6 +439,11 @@ try
                 currTrlIdx = trlCfgIdx;
                 dat = [ dat( [1:currTrlIdx - 1, currTrlIdx + 1:blockEndIdx], :); 
                     dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ];
+                
+                % Sanity check
+                if numel(dat(:,1)) > numBlocks*nTrialsPerBlock
+                    error("Block length greater than what it should be!")
+                end
                 
                 % Show error text
                 DrawFormattedText(psychToolBoxConfig.w, 'Timeout occured while waiting for response', ...
