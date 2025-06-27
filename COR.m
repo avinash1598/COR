@@ -289,9 +289,14 @@ try
         Eyelink('Message','START');
 
         % Get total number of completed trials in current block and session
-        nCompletedTrialsCurrBlock = numel( find( (dat.session == sessionNum) & ...
-            (dat.block == blockIDx) & (dat.trialStatus == 1) ) ); 
+        thisBlockData = find( (dat.session == sessionNum) & ...
+            (dat.block == blockIDx) & (dat.trialStatus == 1) );
+        nCompletedTrialsCurrBlock = numel( thisBlockData ); 
         fprintf("Completed trial in this block %d / %d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock)
+        
+        % Set current cursor at first not completed trial
+        currTrlCursor = find( (dat.session == sessionNum) & ...
+            (dat.block == blockIDx) & (dat.trialStatus == 0) , 1 );
         
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
@@ -299,12 +304,21 @@ try
         while nCompletedTrialsCurrBlock < nTrialsPerBlock
         % while nCompletedTrialsCurrBlock < 10
             
-            % This is wrong. Get first not completed trial
-            trialIDx = nCompletedTrialsCurrBlock + 1;
-
             % === Fetch the trial configuration from the dat file ===
-            trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
-            trlCfg = dat( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx), :);
+            trlCfgIdx = currTrlCursor;
+            trlCfg = dat(trlCfgIdx, :);
+            
+            % Just do a sanity check to make sure this is a correct row.
+            % Ideally this should always be false (i.e. no error)
+            if (trlCfg.session ~= sessionNum) || (trlCfg.block ~= blockIDx)
+                fprintf("Session: %d, %d; Block IDx: %d, %d", ...
+                    trlCfg.session, sessionNum, trlCfg.block, blockIDx);
+                error("Mismatched session num or block idx!")
+            end
+            
+            % % === Fetch the trial configuration from the dat file ===
+            % trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
+            % trlCfg = dat( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx), :);
             
             % Just to confirm, make sure that trial status is not completed
             if trlCfg.trialStatus == 1
@@ -468,6 +482,7 @@ try
             
             % Update number of completed trials in this block
             nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
+            currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
         end
 

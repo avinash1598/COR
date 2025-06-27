@@ -37,12 +37,11 @@ matFile = ['COR' num2str(subjectNum,'%.2d') '.mat'];
 % 1. If file exist 
 %   - Get last run session i.e. 2 
 %   - if there are remaining trials in last run session then ask user and run that
-%   session again for the remaining trials
+%     session again for the remaining trials
 %   - if all the trials are completed then ask the user if they want to run
-%   new session for this subject
-% If file does not exist then just take the subject number and initialize
-% session to 1
-
+%     new session for this subject
+% 2. If file does not exist then just take the subject number and initialize
+%    session to 1
 if ~isempty(dir(matFile)) % File exist
     % Load table from the previous session
     load(matFile)
@@ -57,7 +56,7 @@ if ~isempty(dir(matFile)) % File exist
     % There are still some remaining trials in last run. Ask user if they
     % want to continue with the last session or create a new one
     if remainingTrilsInLastRun > 0
-        choice = questdlg(sprintf(['%d trials still needs to be completed from last session! Do you want to' ...
+        choice = questdlg(sprintf(['%d trials still needs to be completed from the last session! Do you want to' ...
             ' continue with the previous session or create a new one?'], remainingTrilsInLastRun), ...
             'Confirm', 'Continue', 'New', 'Continue');
 
@@ -290,20 +289,34 @@ try
         Eyelink('Message','START');
 
         % Get total number of completed trials in current block and session
-        nCompletedTrialsCurrBlock = numel( find( (dat.session == sessionNum) & ...
-            (dat.block == blockIDx) & (dat.trialStatus == 1) ) ); 
+        thisBlockData = find( (dat.session == sessionNum) & ...
+            (dat.block == blockIDx) & (dat.trialStatus == 1) );
+        nCompletedTrialsCurrBlock = numel( thisBlockData ); 
+        fprintf("Completed trial in this block %d / %d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock)
+        
+        % Set current cursor at first not completed trial
+        currTrlCursor = find( (dat.session == sessionNum) & ...
+            (dat.block == blockIDx) & (dat.trialStatus == 0) , 1 );
         
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
         
-        % while nCompletedTrials < nTrialsPerBlock
-        while nCompletedTrialsCurrBlock < 10
+        while nCompletedTrialsCurrBlock < nTrialsPerBlock
+        % while nCompletedTrialsCurrBlock < 10
             
-            trialIDx = nCompletedTrialsCurrBlock + 1;
-
             % === Fetch the trial configuration from the dat file ===
-            trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
-            trlCfg = dat( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx), :);
+            trlCfgIdx = currTrlCursor;
+            trlCfg = dat(trlCfgIdx, :);
+            
+            % Just do a sanity check to make sure this is a correct row.
+            % Ideally this should always be true
+            if (trlCfg.session ~= sessionNum) || (trlCfg.block ~= blockIDx)
+                error("Mismatched session num or block num")
+            end
+
+            % % === Fetch the trial configuration from the dat file ===
+            % trlCfgIdx = find( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx) );
+            % trlCfg = dat( (dat.session == sessionNum) & (dat.block == blockIDx) & (dat.trial == trialIDx), :);
             
             % Just to confirm, make sure that trial status is not completed
             if trlCfg.trialStatus == 1
@@ -467,6 +480,7 @@ try
             
             % Update number of completed trials in this block
             nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
+            currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
         end
 
@@ -480,14 +494,32 @@ try
 
         
         % Save info and print block stats
-        fprintf("Block duration %.2fs", GetSecs - tStartBlock);
-        fprintf("Completed trials %d/%d", nCompletedTrialsCurrBlock, nTrialsPerBlock);
-        fprintf('Current total reward: $%.2f\n', currentTotalReward);
-        groupsummary(dat, {'reportedConf'}, {'mean', 'std', 'numel'}, 'stimOri' - 'reportedOri')
-
-        save(matFile,'dat', 'description');
+        thisBlockData = dat( (dat.session == sessionNum) & (dat.block == blockIDx), :);
+        stimOri = thisBlockData.stimOri; reportedOri = thisBlockData.reportedOri;
         
-        endOfBlockScreen(psychToolBoxConfig)
+        absErr = abs(stimOri - reportedOri);
+        absOriError = min(absErr, 180 - absErr);  % ensures error is in [0, 90]
+        rawError = stimOri - reportedOri;
+        rawOriError = mod(rawError + 90, 180) - 90;
+        
+        thisBlockData.absOriError = absOriError;
+        thisBlockData.rawOriError = rawOriError;
+        
+        summaryTable1 = groupsummary(thisBlockData, {'reportedConf'}, ...
+                            {@(x) sqrt(nanmean(x.^2)), 'mean', 'std', 'numel'}, 'rawOriError');
+
+        summaryTable2 = groupsummary(thisBlockData, {'reportedConf'}, ...
+                                    {'mean', 'std', 'numel'}, 'absOriError');
+
+
+        fprintf("Block duration %.2fs \n", GetSecs - tStartBlock);
+        fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
+        fprintf('Current total reward: $%.2f \n', currentTotalReward);
+        disp(tableSummary1)
+        disp(tableSummary2)
+
+        save(matFile,'dat', 'description'); % Save info
+        endOfBlockScreen(psychToolBoxConfig) % Show waiting screen
 
     end
     
