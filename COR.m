@@ -11,6 +11,9 @@
 % 7. Check center of the monitor
 % Estimates orientation in dat file
 
+% TODO: set the stimulus parameter by looking into paper and then decide on
+% the bounds
+
 %% Start clean
 close all;
 clearvars;
