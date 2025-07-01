@@ -101,11 +101,11 @@ interTrlInterval = 1;                                                      % Int
 fixationDur = 0.5;                                                         % Fixation duration in seconds
 stimOrientations = linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
-stimLoc_y = 4.5;                                                             % Stimulus location in visual field degrees
-stimDur = [0.2, 0.2];  %0.15 0.5. 0.14 is  the minimum                                                    % Stimulus duration in seconds
-stimSpread = [45, 45]; % 45                                                       % Stimulus spread in degrees
-% stimContrast = [0.015, 0.05];                                                 % Stimulus contrast levels
-stimContrast = [0.018, 0.018]; %0.018
+stimLoc_y = 4.5;                                                           % Stimulus location in visual field degrees
+stimDur = [0.2, 0.2];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
+stimSpread = [5, 5]; % 45                                                  % Stimulus spread in degrees
+% stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
+stimContrast = [0.015, 0.015]; % 0.018
 respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
 numBlocks   = 2;                                                           % Number of blocks 
@@ -1058,7 +1058,7 @@ Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg
 arcRectRed = CenterRectOnPointd([-1 -1 1 1] * arcRadiusRed, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
 arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
 Screen('FrameArc', psychToolBoxConfig.w, [255 0 0], arcRectRed, 90, -180, 4);   % red arc
-Screen('FrameArc', psychToolBoxConfig.w, [0 255 0], arcRectGreen, 90, -180, 4); % green arc
+Screen('FrameArc', psychToolBoxConfig.w, [0 178 0], arcRectGreen, 90, -180, 4); % green arc
 [~, tStartOfRespScreen] = Screen('Flip', psychToolBoxConfig.w);
 
     
@@ -1330,6 +1330,7 @@ elseif theta == 0 && B_theta == 0
 else
     angl = atan2(fy, fx); % Orientation of the stimuli depends upon x and y spatial frequency component
     env = exp(cos(2*(angl-theta))/(2*B_theta)^2);
+    env = env + max(env(:))*0.3; % Add small power to all orientations
     % env = exp(-0.5*(angl-theta).^2/(2*B_theta)^2);
 end
 
