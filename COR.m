@@ -1041,6 +1041,8 @@ arcRadi2 = 5.5;
 % end
 
 % Two arcs
+redRGBLevel = 255;
+greenRGBLevel = 62;
 arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
 arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
 arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
@@ -1060,8 +1062,8 @@ tRspWinStart = GetSecs;
 Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg.fixRect);
 arcRectRed = CenterRectOnPointd([-1 -1 1 1] * arcRadiusRed, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
 arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
-Screen('FrameArc', psychToolBoxConfig.w, [255 0 0], arcRectRed, 90, -180, 4);   % red arc
-Screen('FrameArc', psychToolBoxConfig.w, [0 178 0], arcRectGreen, 90, -180, 4); % green arc
+Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -180, 4);   % red arc
+Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -180, 4); % green arc
 [~, tStartOfRespScreen] = Screen('Flip', psychToolBoxConfig.w);
 
     
@@ -1131,8 +1133,8 @@ while ~responseGiven
     Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg.fixRect);
     arcRectRed = CenterRectOnPointd([-1 -1 1 1] * arcRadiusRed, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
     arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
-    Screen('FrameArc', psychToolBoxConfig.w, [255 0 0], arcRectRed, 90, -180, 4);   % red arc
-    Screen('FrameArc', psychToolBoxConfig.w, [0 255 0], arcRectGreen, 90, -180, 4); % green arc
+    Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -180, 4);   % red arc
+    Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -180, 4); % green arc
     
     if responseGiven
         % One response is given, draw the cursor on the arc and

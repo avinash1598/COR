@@ -11,6 +11,9 @@
 % 7. Check center of the monitor
 % Estimates orientation in dat file
 
+% TODO: set the stimulus parameter by looking into paper and then decide on
+% the bounds
+
 %% Start clean
 close all;
 clearvars;
@@ -88,6 +91,7 @@ if ~isempty(dir(matFile)) % File exist
 
 else % File does not exist
     sessionNum = 1; % Running new session
+    newSession = true;
 end
 
 % Add instruction screen
@@ -100,11 +104,11 @@ interTrlInterval = 1;                                                      % Int
 fixationDur = 0.5;                                                         % Fixation duration in seconds
 stimOrientations = linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
-stimLoc_y = 4.5;                                                             % Stimulus location in visual field degrees
-stimDur = [0.2, 0.2];  %0.15 0.5. 0.14 is  the minimum                                                    % Stimulus duration in seconds
-stimSpread = [45, 45]; % 45                                                       % Stimulus spread in degrees
-% stimContrast = [0.015, 0.05];                                                 % Stimulus contrast levels
-stimContrast = [0.018, 0.018]; %0.018
+stimLoc_y = 4.5;                                                           % Stimulus location in visual field degrees
+stimDur = [0.2, 0.2];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
+stimSpread = [5, 5]; % 45                                                  % Stimulus spread in degrees
+% stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
+stimContrast = [0.015, 0.015]; % 0.018
 respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
 numBlocks   = 2;                                                           % Number of blocks 
@@ -200,7 +204,7 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
         }),...
         'VariableNames',{'description'},'RowNames',variableNames');
 
-else % dat file already exists
+elseif newSession % dat file already exists and this is a new session
     newData = table( ...
         subjectVec, sessionVec, blockVec, trialVec, itiVec, ...
         fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
@@ -1037,6 +1041,8 @@ arcRadi2 = 5.5;
 % end
 
 % Two arcs
+redRGBLevel = 255;
+greenRGBLevel = 69;
 arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
 arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
 arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
@@ -1056,8 +1062,8 @@ tRspWinStart = GetSecs;
 Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg.fixRect);
 arcRectRed = CenterRectOnPointd([-1 -1 1 1] * arcRadiusRed, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
 arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
-Screen('FrameArc', psychToolBoxConfig.w, [255 0 0], arcRectRed, 90, -180, 4);   % red arc
-Screen('FrameArc', psychToolBoxConfig.w, [0 255 0], arcRectGreen, 90, -180, 4); % green arc
+Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -180, 4);   % red arc
+Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -180, 4); % green arc
 [~, tStartOfRespScreen] = Screen('Flip', psychToolBoxConfig.w);
 
     
@@ -1128,7 +1134,7 @@ while ~responseGiven
     arcRectRed = CenterRectOnPointd([-1 -1 1 1] * arcRadiusRed, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
     arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
     Screen('FrameArc', psychToolBoxConfig.w, [255 0 0], arcRectRed, 90, -180, 4);   % red arc
-    Screen('FrameArc', psychToolBoxConfig.w, [0 255 0], arcRectGreen, 90, -180, 4); % green arc
+    Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -180, 4); % green arc
     
     if responseGiven
         % One response is given, draw the cursor on the arc and
@@ -1329,6 +1335,7 @@ elseif theta == 0 && B_theta == 0
 else
     angl = atan2(fy, fx); % Orientation of the stimuli depends upon x and y spatial frequency component
     env = exp(cos(2*(angl-theta))/(2*B_theta)^2);
+    env = env + max(env(:))*0.3; % Add small power to all orientations
     % env = exp(-0.5*(angl-theta).^2/(2*B_theta)^2);
 end
 
