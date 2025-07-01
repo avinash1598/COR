@@ -55,9 +55,9 @@ try
     % Stimulus parameters
     flickerHz = 30;              % Flicker frequency
     framesPerCycle = round(frameRate / flickerHz);
-    baseRect = [0 0 300 300];
+    baseRect = [0 0 round( 2 * ppd) round( 2 * ppd)];
     centeredRect = CenterRectOnPointd(baseRect, rect(3)/2, rect(4)/2);
-
+    
     % Color settings
     redColor = [1 0 0];           % Full red
     greenLevel = 0.7;             % Start point for green intensity
