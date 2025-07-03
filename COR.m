@@ -105,13 +105,13 @@ fixationDur = 0.5;                                                         % Fix
 stimOrientations = linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
 stimLoc_y = 4.5;                                                           % Stimulus location in visual field degrees
-stimDur = [0.2, 0.2];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
+stimDur = [0.5, 0.5];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
 stimSpread = [5, 5]; % 45                                                  % Stimulus spread in degrees
 % stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
-stimContrast = [0.015, 0.015]; % 0.018
+stimContrast = [0.010, 0.015, 0.03, 0.06]; % 0.018
 respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 2;                                                           % Number of blocks 
+numBlocks   = 3;                                                           % Number of blocks 
 nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
@@ -535,8 +535,8 @@ try
         fprintf("Block duration %.2fs \n", GetSecs - tStartBlock);
         fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
         fprintf('Current total reward: $%.2f \n', currentTotalReward);
-        disp(tableSummary1)
-        disp(tableSummary2)
+        disp(summaryTable1)
+        disp(summaryTable2)
 
         save(matFile,'dat', 'description'); % Save info
         endOfBlockScreen(psychToolBoxConfig) % Show waiting screen
@@ -1042,7 +1042,7 @@ arcRadi2 = 5.5;
 
 % Two arcs
 redRGBLevel = 255;
-greenRGBLevel = 62;
+greenRGBLevel = 50;
 arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
 arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
 arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
