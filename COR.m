@@ -108,8 +108,8 @@ stimLoc_y = 4.5;                                                           % Sti
 stimDur = [0.5, 0.5];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
 stimSpread = [5, 5]; % 45                                                  % Stimulus spread in degrees
 % stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
-stimContrast = [0.010, 0.015, 0.08]; % 0.018
-respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
+stimContrast = [0.015, 0.018, 0.05]; % 0.018
+respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
 numBlocks   = 3;                                                           % Number of blocks 
 nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
@@ -1029,8 +1029,8 @@ end
 %% Show response screen
 function respData = showResponseScreen(psychToolBoxConfig, fixationWinCfg, trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur)
 
-arcRadi1 = 3.5;
-arcRadi2 = 5.5;
+arcRadi2 = 3.5;
+arcRadi1 = 5.5;
 
 % if rand > 0.5
 %     arcRadi1 = 3.5;
@@ -1042,7 +1042,7 @@ arcRadi2 = 5.5;
 
 % Two arcs
 redRGBLevel = 255;
-greenRGBLevel = 50;
+greenRGBLevel =40;% 50;
 arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
 arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
 arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
