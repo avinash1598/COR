@@ -108,7 +108,7 @@ stimLoc_y = 4.5;                                                           % Sti
 stimDur = [0.5, 0.5];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
 stimSpread = [5, 5]; % 45                                                  % Stimulus spread in degrees
 % stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
-stimContrast = [0.010, 0.015, 0.03, 0.06]; % 0.018
+stimContrast = [0.010, 0.015, 0.08]; % 0.018
 respMaxDur = 5;                                                            % Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
 numBlocks   = 3;                                                           % Number of blocks 
@@ -1182,7 +1182,7 @@ function reward = calcReward(trueOri, reportedOri, confReport)
 % Note: reported orientation is already pi-periodic, true orientation as
 % well
 maxTolerableError = 20; % In degrees
-sigmaHC = sqrt(30);     % HC reward function std deviation
+sigmaHC = 3.25;         % HC reward function std deviation sqrt(30)
 valLC   = 0.3;          % LC constant reward
 absPerceptualError = abs(trueOri - reportedOri);
 absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
