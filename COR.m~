@@ -473,8 +473,8 @@ try
             reward = calcReward(trlCfg.stimOri, reportedOri, confReport);
             currentTotalReward = currentTotalReward + reward;
             
-            if reward <= 0
-                DrawFormattedText(psychToolBoxConfig.w,['' num2str(reward,'%.3f')],'center', ...
+            if reward == 0
+                DrawFormattedText(psychToolBoxConfig.w,['+' num2str(reward,'%.2f')],'center', ...
                     psychToolBoxConfig.yCenter - 30,[255 0 0]);
             else
                 DrawFormattedText(psychToolBoxConfig.w,['+' num2str(reward,'%.3f')],'center', ...
@@ -1033,8 +1033,8 @@ end
 %% Show response screen
 function respData = showResponseScreen(psychToolBoxConfig, fixationWinCfg, trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur)
 
-arcRadi1 = 5; %5,5 - 5.4
-arcRadi2 = 6.2;   %3.5 - 4.2
+arcRadi1 = 5.4; %5,5
+arcRadi2 = 4.2; %3.5
 
 % if rand > 0.5
 %     arcRadi1 = 3.5;
@@ -1202,11 +1202,7 @@ absPerceptualError = abs(trueOri - reportedOri);
 absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 if absPerceptualError > maxTolerableError
-    if confReport == 1
-        reward = -0.4;
-    else
-        reward = 0;
-    end
+    reward = 0;
     return
 end
 
@@ -1218,16 +1214,13 @@ m1 = 1/y1;
 m2 = m1 - (c1 - c2)/x1;
 
 if confReport == 1 % High confidence
-    gHC = - m1 * absPerceptualError + c1;
-    if absPerceptualError > y1
-        gHC = 0.3*gHC;
-    end
+    gHC = - m1 * absPerceptualError + c1; yHC(abs(x) > y1) = 0.3*yHC(abs(x) > y1);
+    
     % g = exp( - (absPerceptualError).^2 / (2 * sigmaHC^2) );
-    reward = gHC;
+    reward = g;
 elseif confReport == 0  % Low confidence
-    % valLC = - 0.0105 * absPerceptualError + 0.21;
-    gLC = - m2 * absPerceptualError + c2;
-    reward = gLC;
+    valLC = - 0.0105 * absPerceptualError + 0.21;
+    reward = valLC;
 else
     error('Unknown confidence report: %s. Must be "HC" or "LC".', confReport);
 end

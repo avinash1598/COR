@@ -88,14 +88,14 @@ x2 = -x1;
 
 figure
 hold on
-plot(x, yHC, DisplayName="HC", LineWidth=2)
-plot(x, yLC, DisplayName="LC", LineWidth=2)
+plot(x, yHC, 'DisplayName', "HC", 'LineWidth', 2)
+plot(x, yLC, 'DisplayName', "LC", 'LineWidth', 2)
+plot(x, exp(-abs(x).^2 / ( 2 * 4^2) ))
 xlabel("Perceptual error")
 ylabel("Reward")
 legend
 
-yline(0, LineWidth=2, LineStyle="--", HandleVisibility="off")
-xline(x1, LineWidth=2, LineStyle="--", HandleVisibility="off")
-xline(x2, LineWidth=2, LineStyle="--", HandleVisibility="off")
+xline(x1, 'LineWidth', 2, 'LineStyle', "--", 'HandleVisibility', "off")
+xline(x2, 'LineWidth', 2, 'LineStyle', "--", 'HandleVisibility', "off")
 
 hold off
