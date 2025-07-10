@@ -108,7 +108,7 @@ stimLoc_y = 5;                                                           % Stimu
 stimDur = [0.3, 0.3];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
 stimSpread = [5, 5]; % 45                                                  % Stimulus spread in degrees
 % stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
-stimContrast = [0.015, 0.018, 0.05]; % 0.018
+stimContrast = [0.015, 0.025, 0.05]; % 0.018
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
 numBlocks   = 3;                                                           % Number of blocks 
@@ -284,7 +284,8 @@ try
     % 
     %     end
     % end
-    
+    % TODO: don't go to completed block. Just start with block yet to
+    % be completed.
     for blockIDx=1:numBlocks
         
         tStartBlock = GetSecs;
