@@ -105,14 +105,16 @@ fixationDur = 0.5;                                                         % Fix
 stimOrientations = linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
 stimLoc_y = 5;                                                           % Stimulus location in visual field degrees
-stimDur = [0.3, 0.3];  %0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
-stimSpread = [5, 25, 45]; % 45                                                  % Stimulus spread in degrees
+stimDur = [0.05, 0.3];  %0.05 0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
+stimSpread = [5, 25]; % 5, 25, 45                                               % Stimulus spread in degrees
 % stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
-stimContrast = [0.05, 0.05]; % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
+stimContrast = [0.015, 0.05]; % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
 numBlocks   = 3;                                                           % Number of blocks 
-nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
+% nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
+nTrialsPerBlock = numel(stimOrientations)*7;    % TODO: delete
+
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
 beeperDur = 0.15;
@@ -136,6 +138,9 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 % Factorial design for stimulus
 [d, s, c] = ndgrid(stimDur, stimSpread, stimContrast);
 combinations = [d(:), s(:), c(:)];  % 8x3
+
+% Hack
+combinations = combinations(2:end, :); %TODO: delete
 
 comboRepeated = repmat(combinations, length(stimOrientations), 1);  % Repeat the combinations for each orientation (10 times)
 orientationsRepeated = repelem(stimOrientations(:), size(combinations, 1));  % Repeat orientations to match combination matrix
