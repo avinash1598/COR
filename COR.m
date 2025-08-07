@@ -113,7 +113,7 @@ respMaxDur = 5;                                                            % 0.0
 respSuccessWaitDur = 0.5;
 numBlocks   = 3;                                                           % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
-nTrialsPerBlock = numel(stimOrientations)*7;    % TODO: delete
+nTrialsPerBlock = numel(stimOrientations)*6;    % TODO: delete
 
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
@@ -140,7 +140,7 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 combinations = [d(:), s(:), c(:)];  % 8x3
 
 % Hack
-combinations = combinations(2:end, :); %TODO: delete
+combinations = [combinations(2, :); combinations(4:end, :)]; %TODO: delete
 
 comboRepeated = repmat(combinations, length(stimOrientations), 1);  % Repeat the combinations for each orientation (10 times)
 orientationsRepeated = repelem(stimOrientations(:), size(combinations, 1));  % Repeat orientations to match combination matrix
