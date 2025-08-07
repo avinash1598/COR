@@ -424,7 +424,8 @@ try
                     dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ]; % Test edge cases
                 
                 % Sanity check
-                if numel(dat(:,1)) > numBlocks*nTrialsPerBlock
+                % TODO: fix hack
+                if numel(dat(:,1)) > sessionNum*numBlocks*nTrialsPerBlock
                     error("Block length greater than what it should be!")
                 end
                 
@@ -454,7 +455,9 @@ try
                     dat(currTrlIdx, :); dat(blockEndIdx+1:end, :) ];
                 
                 % Sanity check
-                if numel(dat(:,1)) > numBlocks*nTrialsPerBlock
+                % TODO: fix this - this isnot right - no of blocks might
+                % var for different session
+                if numel(dat(:,1)) > sessionNum*numBlocks*nTrialsPerBlock
                     error("Block length greater than what it should be!")
                 end
                 
