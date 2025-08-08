@@ -111,7 +111,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                               
 stimContrast = [0.015, 0.05]; % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 6;                                                           % Number of blocks 
+numBlocks   = 3;                                                           % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 nTrialsPerBlock = numel(stimOrientations)*6;    % TODO: delete
 
@@ -291,7 +291,7 @@ try
     % end
     % TODO: don't go to completed block. Just start with block yet to
     % be completed.
-    completedTrialsData = dat((dat.session == sessionNum) & (dat.trialStatus == 1), :);
+    completedTrialsData = find((dat.session == sessionNum) && dat.trialStatus == 1);
     if numel(completedTrialsData) > 0
         completedBlockIdxes = unique(completedTrialsData.block);
         currBlockIdx = max(completedBlockIdxes);
@@ -310,18 +310,7 @@ try
     end
     
     % Get total count of trials completed till last session
-    if (sessionNum > 1)
-        trialsDataPrevSession = find((dat.session <= (sessionNum - 1)));
-        totalTrialsTillPrevSession = numel(trialsDataPrevSession);
-    else
-        totalTrialsTillPrevSession = 0;
-    end
-    
-    fprintf("Session %d, block %d, Trials till prev session %d \n", ...
-        sessionNum, startBlockIdx, totalTrialsTillPrevSession);
-        
-    
-    % Run trials
+    if (see)
     for blockIDx=startBlockIdx:numBlocks
         
         tStartBlock = GetSecs;
@@ -456,7 +445,7 @@ try
                 
                 % Sanity check
                 % TODO: fix hack
-                if numel(dat(:,1)) > totalTrialsTillPrevSession + numBlocks*nTrialsPerBlock
+                if numel(dat(:,1)) > sessionNum*numBlocks*nTrialsPerBlock
                     error("Block length greater than what it should be!")
                 end
                 
@@ -488,7 +477,7 @@ try
                 % Sanity check
                 % TODO: fix this - this isnot right - no of blocks might
                 % var for different session
-                if numel(dat(:,1)) > totalTrialsTillPrevSession + numBlocks*nTrialsPerBlock
+                if numel(dat(:,1)) > sessionNum*numBlocks*nTrialsPerBlock
                     error("Block length greater than what it should be!")
                 end
                 
