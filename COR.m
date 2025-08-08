@@ -111,7 +111,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                               
 stimContrast = [0.015, 0.05]; % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 4;                                                           % Number of blocks 
+numBlocks   = 2;                                                           % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 nTrialsPerBlock = numel(stimOrientations)*8;    % TODO: delete
 
