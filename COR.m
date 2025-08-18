@@ -1241,12 +1241,56 @@ end
 
 end
 
+% %% Calculate reward
+% function reward = calcReward(trueOri, reportedOri, confReport)
+% 
+% % Note: reported orientation is already pi-periodic, true orientation as
+% % well
+% maxTolerableError = 20; % In degrees
+% % sigmaHC = 3.25;         % HC reward function std deviation sqrt(30)
+% % valLC   = 0.3;          % LC constant reward
+% absPerceptualError = abs(trueOri - reportedOri);
+% absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
+% 
+% if absPerceptualError > maxTolerableError
+%     if confReport == 1
+%         reward = -0.4;
+%     else
+%         reward = 0;
+%     end
+%     return
+% end
+% 
+% y1 = 9;
+% x1 = 7.28;
+% c1 = 1;
+% c2 = 0.3;
+% m1 = 1/y1;
+% m2 = m1 - (c1 - c2)/x1;
+% 
+% if confReport == 1 % High confidence
+%     gHC = - m1 * absPerceptualError + c1;
+%     if absPerceptualError > y1
+%         gHC = 0.3*gHC;
+%     end
+%     % g = exp( - (absPerceptualError).^2 / (2 * sigmaHC^2) );
+%     reward = gHC;
+% elseif confReport == 0  % Low confidence
+%     % valLC = - 0.0105 * absPerceptualError + 0.21;
+%     gLC = - m2 * absPerceptualError + c2;
+%     reward = gLC;
+% else
+%     error('Unknown confidence report: %s. Must be "HC" or "LC".', confReport);
+% end
+% 
+% end
+
 %% Calculate reward
 function reward = calcReward(trueOri, reportedOri, confReport)
 
 % Note: reported orientation is already pi-periodic, true orientation as
 % well
-maxTolerableError = 20; % In degrees
+maxTolerableError = 25; % In degrees
 % sigmaHC = 3.25;         % HC reward function std deviation sqrt(30)
 % valLC   = 0.3;          % LC constant reward
 absPerceptualError = abs(trueOri - reportedOri);
@@ -1254,25 +1298,25 @@ absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 if absPerceptualError > maxTolerableError
     if confReport == 1
-        reward = -0.4;
+        reward = -0.8;
     else
         reward = 0;
     end
     return
 end
 
-y1 = 9;
-x1 = 7.28;
+y1 = 15;
+x1 = 10;
 c1 = 1;
-c2 = 0.3;
-m1 = 1/y1;
-m2 = m1 - (c1 - c2)/x1;
+c2 = 0.4;
+m1 = c1/y1;
+m2 = c2 / maxTolerableError; %m1 - (c1 - c2)/x1;
 
 if confReport == 1 % High confidence
     gHC = - m1 * absPerceptualError + c1;
-    if absPerceptualError > y1
-        gHC = 0.3*gHC;
-    end
+%     if absPerceptualError > y1
+%         gHC = 0.3*gHC;
+%     end
     % g = exp( - (absPerceptualError).^2 / (2 * sigmaHC^2) );
     reward = gHC;
 elseif confReport == 0  % Low confidence

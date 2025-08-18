@@ -105,16 +105,16 @@ hold off
 
 %% Analytical reward function
 maxTolerableError = 25; % In degrees
-x = linspace(-30, 30, 201);
+x = linspace(-25, 25, 201);
 
 y1 = 15; %20
-x1 = 10;
+x1 = `0;
 sigmaErrSD_C0_015 = 8.85;
 prob = cdf('Normal', x1, 0, sigmaErrSD_C0_015) - cdf('Normal', -x1, 0, sigmaErrSD_C0_015);
 disp(prob)
 
 c1 = 1;
-c2 = 0.4;
+c2 = 0.3;
 
 m1 = c1/y1;
 m2 = c2 / maxTolerableError; %   m1 - (c1 - c2)/x1;
