@@ -48,16 +48,16 @@ std(~isnan(spreadErrs))
 
 %% Figure 1 - Raw errors by group - Estimation error (Human subject)
 % Get elements in the group
-[G, contrastLevels] = findgroups(data.dat.stimContrast);
+[G, spreadLevels] = findgroups(data.dat.stimSpread);
 grpIdxes = unique(G);
 
 % Sort conditions by uncertainty difference
-[B_, sidx] = sort(contrastLevels);
+[B_, sidx] = sort(spreadLevels);
 
-sContrast = contrastLevels(sidx);
+sSpreads = spreadLevels(sidx);
 
 % Generate x-axis labels as combined strings like "0.2|5"
-xLabels = strcat(string(sContrast));
+xLabels = strcat(string(sSpreads));
 
 % Define visual properties
 colors = [0.85 0.33 0.10; 0 0.45 0.74; 0.85 0.33 0.10; 0 0.45 0.74]; % colorblind-friendly red/blue
@@ -193,7 +193,7 @@ hold off
 
 %% Histogram
 
-[G, contrastLevels] = findgroups(data.dat.stimContrast);
+[G, contrastLevels] = findgroups(data.dat.stimSpread);
 grpIdxes = unique(G);
 
 % Sort conditions by uncertainty difference
@@ -222,16 +222,16 @@ title("Distribution of errors")
 %% MSE error by contrast levels and confidence
 datOK = data.dat(data.dat.trialStatus == 1, :);
 
-summaryTable = groupsummary(datOK, {'stimContrast', 'reportedConf'}, ...
+summaryTable = groupsummary(datOK, {'stimSpread', 'reportedConf'}, ...
                             {@(x) sqrt(nanmean(x.^2)), 'mean', 'std', 'numel'}, 'rawOriError');
 
 disp(summaryTable)
 
-summaryTable = groupsummary(datOK, {'stimContrast'}, ...
+summaryTable = groupsummary(datOK, {'stimSpread'}, ...
                             {'mean', 'std', 'numel'}, 'absOriError');
 
 
-sContrasts = summaryTable.stimContrast;
+sContrasts = summaryTable.stimSpread;
 [B_, sidx] = sort(sContrasts);
 
 sContrast = sContrasts(sidx);
@@ -254,14 +254,14 @@ grid on;
 
 
 % By confidence
-summaryTable = groupsummary(datOK, {'stimContrast'}, ...
+summaryTable = groupsummary(datOK, {'stimSpread'}, ...
                             {'mean', 'std', 'numel'}, 'absOriError');
 
-sContrasts = summaryTable.stimContrast;
+sContrasts = summaryTable.stimSpread;
 [B_, sidx] = sort(sContrasts);
 sContrast = sContrasts(sidx);
 
-summaryTable = groupsummary(datOK, {'stimContrast', 'reportedConf'}, ...
+summaryTable = groupsummary(datOK, {'stimSpread', 'reportedConf'}, ...
                             {'mean', 'std', 'numel'}, 'absOriError');
 
 mErrHC = zeros(1, numel(sContrast));
@@ -270,12 +270,12 @@ mErrLC = zeros(1, numel(sContrast));
 stdErrLC = zeros(1, numel(sContrast));
 
 for i = 1:numel(sContrast)
-    rowHC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+    rowHC = summaryTable(summaryTable.stimSpread == sContrast(i) & ...
         summaryTable.reportedConf == 1, :);
     mErrHC(i) = rowHC.mean_absOriError;
     stdErrHC(i) = rowHC.std_absOriError;
 
-    rowLC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+    rowLC = summaryTable(summaryTable.stimSpread == sContrast(i) & ...
         summaryTable.reportedConf == 0, :);
     if ~isempty(rowLC)
         mErrLC(i) = rowLC.mean_absOriError;
@@ -309,7 +309,7 @@ hold off
 
 
 % MSE error
-summaryTable = groupsummary(datOK, {'stimContrast'}, ...
+summaryTable = groupsummary(datOK, {'stimSpread'}, ...
                             {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
 
 meanError = summaryTable.fun1_rawOriError(sidx);
@@ -318,25 +318,25 @@ subplot(2, 2, 3)
 plot(1:numel(meanError), meanError, 'o-', LineWidth=2);
 xticks(1:length(xLabels));
 xticklabels(xLabels);
-xlabel("StimContrast" + newline + "(increasing uncertainty)")
+xlabel("stimSpread" + newline + "(increasing uncertainty)")
 ylabel('Orientation Error (deg)');
 title('MSE error');
 grid on;
 
 
 % MSE err split by confidence
-summaryTable = groupsummary(datOK, {'stimContrast', 'reportedConf'}, ...
+summaryTable = groupsummary(datOK, {'stimSpread', 'reportedConf'}, ...
                             {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
 
 mseHC = zeros(1, numel(sContrast));
 mseLC = zeros(1, numel(sContrast));
 
 for i = 1:numel(sContrast)
-    rowHC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+    rowHC = summaryTable(summaryTable.stimSpread == sContrast(i) & ...
         summaryTable.reportedConf == 1, :);
     mseHC(i) = rowHC.fun1_rawOriError;
 
-    rowLC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+    rowLC = summaryTable(summaryTable.stimSpread == sContrast(i) & ...
         summaryTable.reportedConf == 0, :);
     if ~isempty(rowLC)
         mseLC(i) = rowLC.fun1_rawOriError;

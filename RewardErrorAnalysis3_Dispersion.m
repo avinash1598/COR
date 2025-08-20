@@ -1,11 +1,12 @@
-% close all
+close all
 clear all
 
 % data = load('COR01_Ranjan random ori.mat');
 % data = load('COR01_600_trials.mat');
-data = load('COR06 ArcRadi 6.2G 5R.mat');
+% data = load('COR06 ArcRadi 6.2G 5R.mat');
 % data = load('COR05 ArcRadi 5G 6.2R.mat');
 % data = load('COR04_ArcRad 4.2G 5.4R.mat');
+data = load('COR07.mat');
 
 stimOri = data.dat.stimOri;
 reportedOri = data.dat.reportedOri;
@@ -46,15 +47,15 @@ xline(x2, LineWidth=2, LineStyle="--", HandleVisibility="off")
 hold off
 
 %% Histogram
-theoreticalPropHC = zeros(1, numel(unique(data.dat.stimContrast)));
-actualPropHC = zeros(1, numel(unique(data.dat.stimContrast)));
+theoreticalPropHC = zeros(1, numel(unique(data.dat.stimSpread)));
+actualPropHC = zeros(1, numel(unique(data.dat.stimSpread)));
 
-tableSummary = groupsummary(data.dat, {'stimContrast', 'reportedConf'}, ...
+tableSummary = groupsummary(data.dat, {'stimSpread', 'reportedConf'}, ...
     {'mean', 'std', 'numel'}, 'rawOriError');
 tableSummary = tableSummary(tableSummary.reportedConf == 1, : );
 actualPropHC(:) = tableSummary.GroupCount / 120;
 
-[G, contrastLevels] = findgroups(data.dat.stimContrast);
+[G, contrastLevels] = findgroups(data.dat.stimSpread);
 grpIdxes = unique(G);
 
 % Sort conditions by uncertainty difference
@@ -97,7 +98,7 @@ for i=1:numel(sidx)
 
     xlabel("Orientation (deg)")
     ylabel("count")
-    title(sprintf("Contrast: %.3f, \n Prop HC: (%.3f), Prop LC: (%.3f) " + ...
+    title(sprintf("Spread: %.3f, \n Prop HC: (%.3f), Prop LC: (%.3f) " + ...
         "\n Below Thr: %.2f, Above Thr: %.2f " + ...
         "\n sigma = %.3f", ...
         contrastLevels(gidx_), y, 1-y, ...
@@ -111,15 +112,15 @@ end
 
 %% Histogram by confidence
 
-[G, contrastLevels, confReports] = findgroups(data.dat.stimContrast, data.dat.reportedConf);
+[G, contrastLevels, confReports] = findgroups(data.dat.stimSpread, data.dat.reportedConf);
 grpIdxes = unique(G);
 
 figure
 for i=1:numel(unique(contrastLevels))
     contrLevel_ = contrastLevels(2*i);
     % confLevel_ = confReports(i);
-    fltIdxLC = (data.dat.stimContrast == contrLevel_) & (data.dat.reportedConf == 0);
-    fltIdxHC = (data.dat.stimContrast == contrLevel_) & (data.dat.reportedConf == 1);
+    fltIdxLC = (data.dat.stimSpread == contrLevel_) & (data.dat.reportedConf == 0);
+    fltIdxHC = (data.dat.stimSpread == contrLevel_) & (data.dat.reportedConf == 1);
     rawErrLC = rawOriError(fltIdxLC);
     rawErrHC = rawOriError(fltIdxHC);
     rewardLC = data.dat.reward(fltIdxLC);
@@ -181,7 +182,7 @@ ylim([0 1])
 % Add text labels near each point
 for i = 1:length(theoreticalPropHC)
     text(theoreticalPropHC(i) + 0.01, actualPropHC(i), ...
-         sprintf(' Contrast %.3f', tableSummary.stimContrast(i)));
+         sprintf(' Contrast %.3f', tableSummary.stimSpread(i)));
 end
 
 

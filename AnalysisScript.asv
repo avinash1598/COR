@@ -1,8 +1,10 @@
-% close all
+close all
 clear all
 
+% data = load('COR01_Ranjan random ori.mat');
+% data = load('COR01_600_trials.mat');
+% data = load('COR13.mat');
 data = load('COR14.mat');
-% data = load('COR15.mat');
 
 stimOri = data.dat.stimOri;
 reportedOri = data.dat.reportedOri;
@@ -596,29 +598,28 @@ hold off
 
 
 % sample mean
-% If subject is using sample mean to report orientation then variability
-% wrt sample mean should ideally be less than wrt actual mean.
 meanError = grpAbsErrs_Mean_S;
 stdError = grpAbsErrs_Std_S;
 
 % Plot with error bars
-subplot(2, 4, 5)
+figure;
+subplot(2, 4, 1)
 % plot(stdError)
 errorbar(meanError, stdError, 'o-', LineWidth=2);
 xticks(1:length(xLabels));
 xticklabels(xLabels);
 xlabel("StimDur, StimContrast, StimSpread" + newline + "(increasing uncertainty)")
 ylabel('Orientation Error (deg)');
-title('Absolute Error (sample mean)');
+title('Absolute Error');
 
 grid on;
 
 
 % Plot with error bars
-subplot(2, 4, 6)
+subplot(2, 4, 2)
 hold on
-errorbar(grpAbsErrs_Mean_by_conf_S(1, :), grpAbsErrs_Std_by_conf_S(1, :), 'o-', LineWidth=2, DisplayName='LC');
-errorbar(grpAbsErrs_Mean_by_conf_S(2, :), grpAbsErrs_Std_by_conf_S(2, :), 'o-', LineWidth=2, DisplayName='HC');
+errorbar(grpAbsErrs_Mean_by_conf(1, :), grpAbsErrs_Std_by_conf(1, :), 'o-', LineWidth=2, DisplayName='LC');
+errorbar(grpAbsErrs_Mean_by_conf(2, :), grpAbsErrs_Std_by_conf(2, :), 'o-', LineWidth=2, DisplayName='HC');
 
 xticks(1:length(xLabels));
 xticklabels(xLabels);
@@ -633,10 +634,10 @@ hold off
 % grpRawErrs_Std_by_conf  = zeros(2, numel(grpIdxes));
 
 % meanError = grpRawErrs_Mean;
-stdError = grpRawErrs_Std_S;
+stdError = grpRawErrs_Std;
 
 % Plot with error bars
-subplot(2, 4, 7)
+subplot(2, 4, 3)
 plot(stdError, LineWidth=2)
 % errorbar(meanError, stdError, 'o-', LineWidth=2);
 xticks(1:length(xLabels));
@@ -648,10 +649,10 @@ title('Raw Error');
 grid on;
 
 % By confidence
-subplot(2, 4, 8)
+subplot(2, 4, 4)
 hold on
-plot(grpRawErrs_Std_by_conf_S(1, :), LineWidth=2, DisplayName='LC')
-plot(grpRawErrs_Std_by_conf_S(2, :), LineWidth=2, DisplayName='HC')
+plot(grpRawErrs_Std_by_conf(1, :), LineWidth=2, DisplayName='LC')
+plot(grpRawErrs_Std_by_conf(2, :), LineWidth=2, DisplayName='HC')
 
 xticks(1:length(xLabels));
 xticklabels(xLabels);
@@ -663,68 +664,54 @@ legend
 hold off
 
 
-%% RMSE error
-
-summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread', 'stimDur'}, ...
-                            {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
-
-meanError = summaryTable.fun1_rawOriError(sidx);
-
-figure
-subplot(1, 2, 1)
-plot(1:numel(meanError), meanError, 'o-', LineWidth=2);
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("increasing uncertainty")
-ylabel('Orientation Error (deg)');
-title('RMSE error');
-grid on;
-
-
-% MSE err split by confidence
-summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread', 'stimDur', 'reportedConf'}, ...
-                            {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
-
-mseHC = zeros(1, numel(sContrast));
-mseLC = zeros(1, numel(sContrast));
-
-for i = 1:numel(sContrast)
-    rowHC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
-        summaryTable.stimSpread == sSpread(i) & ...
-        summaryTable.stimDur == sDur(i) & ...
-        summaryTable.reportedConf == 1, :);
-    mseHC(i) = rowHC.fun1_rawOriError;
-
-    rowLC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
-        summaryTable.stimSpread == sSpread(i) & ...
-        summaryTable.stimDur == sDur(i) & ...
-        summaryTable.reportedConf == 0, :);
-    if ~isempty(rowLC)
-        mseLC(i) = rowLC.fun1_rawOriError;
-    else
-        mseLC(i) = NaN;
-    end
-
-end
-
-subplot(1, 2, 2)
-hold on
-plot(1:numel(mseHC), mseHC, 'o-', LineWidth=2, DisplayName="HC");
-plot(1:numel(mseLC), mseLC, 'o-', LineWidth=2, DisplayName="LC");
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("increasing uncertainty")
-ylabel('Orientation Error (deg)');
-title('MSE error');
-grid on;
-hold off
-
-
-
-%%
-
-x = linspace(0, 180, 100);
-y = 9 + (16 - 9)*abs(sind(2*x));
-
-figure
-plot(x, abs(y))
+% %%
+% % MSE error
+% summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread'}, ...
+%                             {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
+% 
+% meanError = summaryTable.fun1_rawOriError(sidx);
+% 
+% subplot(2, 2, 3)
+% plot(1:numel(meanError), meanError, 'o-', LineWidth=2);
+% xticks(1:length(xLabels));
+% xticklabels(xLabels);
+% xlabel("StimContrast, StimSpread" + newline + "(increasing uncertainty)")
+% ylabel('Orientation Error (deg)');
+% title('MSE error');
+% grid on;
+% 
+% % MSE err split by confidence
+% summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread', 'reportedConf'}, ...
+%                             {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
+% 
+% mseHC = zeros(1, numel(sContrast));
+% mseLC = zeros(1, numel(sContrast));
+% 
+% for i = 1:numel(sContrast)
+%     rowHC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+%         summaryTable.stimSpread == sSpread(i) & ...
+%         summaryTable.reportedConf == 1, :);
+%     mseHC(i) = rowHC.fun1_rawOriError;
+% 
+%     rowLC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+%         summaryTable.stimSpread == sSpread(i) & ...
+%         summaryTable.reportedConf == 0, :);
+%     if ~isempty(rowLC)
+%         mseLC(i) = rowLC.fun1_rawOriError;
+%     else
+%         mseLC(i) = NaN;
+%     end
+% 
+% end
+% 
+% subplot(2, 2, 4)
+% hold on
+% plot(1:numel(mseHC), mseHC, 'o-', LineWidth=2, DisplayName="HC");
+% plot(1:numel(mseLC), mseLC, 'o-', LineWidth=2, DisplayName="LC");
+% xticks(1:length(xLabels));
+% xticklabels(xLabels);
+% xlabel("StimContrast, StimSpread" + newline + "(increasing uncertainty)")
+% ylabel('Orientation Error (deg)');
+% title('MSE error');
+% grid on;
+% hold off

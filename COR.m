@@ -1020,6 +1020,11 @@ R = abs(Ae_itheta) / sum(A(:));
 meanAngle = 0.5 * rad2deg(angle(Ae_itheta));
 stdAngle = rad2deg(sqrt(-2 * log(R))) / 2;  % This is the approxiamtion for von-misses distribution
 
+% Note: the significant difference between sample mean and actual angle is 
+% becuase of asymmetry in the power specturm which is due to the addition 
+% of random phase. Moreover, the power spectra of the movie needs to be
+% asymmetric otherwise the component will just cancel out leaving zero
+% orientation (or noiseless oriented grating).
 stimMetrics.meanAngle = meanAngle;
 stimMetrics.stdAngle = stdAngle;
 
@@ -1285,42 +1290,82 @@ end
 % 
 % end
 
+% %% Calculate reward
+% function reward = calcReward(trueOri, reportedOri, confReport)
+% 
+% % Note: reported orientation is already pi-periodic, true orientation as
+% % well
+% maxTolerableError = 25; % In degrees
+% % sigmaHC = 3.25;         % HC reward function std deviation sqrt(30)
+% % valLC   = 0.3;          % LC constant reward
+% absPerceptualError = abs(trueOri - reportedOri);
+% absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
+% 
+% if absPerceptualError > maxTolerableError
+%     if confReport == 1
+%         reward = -0.8;
+%     else
+%         reward = 0;
+%     end
+%     return
+% end
+% 
+% y1 = 15;
+% x1 = 10;
+% c1 = 1;
+% c2 = 0.4;
+% m1 = c1/y1;
+% m2 = c2 / maxTolerableError; %m1 - (c1 - c2)/x1;
+% 
+% if confReport == 1 % High confidence
+%     gHC = - m1 * absPerceptualError + c1;
+% %     if absPerceptualError > y1
+% %         gHC = 0.3*gHC;
+% %     end
+%     % g = exp( - (absPerceptualError).^2 / (2 * sigmaHC^2) );
+%     reward = gHC;
+% elseif confReport == 0  % Low confidence
+%     % valLC = - 0.0105 * absPerceptualError + 0.21;
+%     gLC = - m2 * absPerceptualError + c2;
+%     reward = gLC;
+% else
+%     error('Unknown confidence report: %s. Must be "HC" or "LC".', confReport);
+% end
+% 
+% end
+
 %% Calculate reward
 function reward = calcReward(trueOri, reportedOri, confReport)
 
 % Note: reported orientation is already pi-periodic, true orientation as
 % well
 maxTolerableError = 25; % In degrees
-% sigmaHC = 3.25;         % HC reward function std deviation sqrt(30)
-% valLC   = 0.3;          % LC constant reward
 absPerceptualError = abs(trueOri - reportedOri);
 absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 if absPerceptualError > maxTolerableError
     if confReport == 1
-        reward = -0.8;
+        reward = -0.5;
     else
         reward = 0;
     end
     return
 end
 
-y1 = 15;
-x1 = 10;
+y1 = 11 + (16 - 11)*abs(sind(2*trueOri));
+% y1 = 15;
 c1 = 1;
-c2 = 0.4;
+c2 = 0.3;
 m1 = c1/y1;
 m2 = c2 / maxTolerableError; %m1 - (c1 - c2)/x1;
 
 if confReport == 1 % High confidence
     gHC = - m1 * absPerceptualError + c1;
-%     if absPerceptualError > y1
-%         gHC = 0.3*gHC;
-%     end
-    % g = exp( - (absPerceptualError).^2 / (2 * sigmaHC^2) );
+    if absPerceptualError > y1
+        gHC = 0.3*gHC;
+    end
     reward = gHC;
 elseif confReport == 0  % Low confidence
-    % valLC = - 0.0105 * absPerceptualError + 0.21;
     gLC = - m2 * absPerceptualError + c2;
     reward = gLC;
 else
@@ -1415,6 +1460,8 @@ if sf_0 == 0 || B_sf == inf
 elseif loggabor
     fr = frequencyRadius(fx, fy, ft, sftScale, true);
     env = exp(-.5*log(fr/sf_0).^2/log(1+B_sf/sf_0)^2);
+    % Note: this addition of small spread at all angles maybe reflected in
+    % huge differences in actual spread vs sample spread.
     % env = exp(-.5*(log(fr)-log(sf_0^2/sqrt(sf_0^2+B_sf^2))).^2/log(1+B_sf^2/sf_0^2));
 else
     fr = frequencyRadius(fx, fy, ft, sftScale, true);

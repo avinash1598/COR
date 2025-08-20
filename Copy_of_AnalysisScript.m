@@ -1,8 +1,10 @@
-% close all
+close all
 clear all
 
+% data = load('COR01_Ranjan random ori.mat');
+% data = load('COR01_600_trials.mat');
+% data = load('COR13.mat');
 data = load('COR14.mat');
-% data = load('COR15.mat');
 
 stimOri = data.dat.stimOri;
 reportedOri = data.dat.reportedOri;
@@ -11,16 +13,6 @@ absErr = abs(stimOri - reportedOri);
 absOriError = min(absErr, 180 - absErr);  % ensures error is in [0, 90]
 rawError = stimOri - reportedOri;
 rawOriError = mod(rawError + 90, 180) - 90;
-
-data.dat.rawOriErrorOrg = rawOriError;
-
-% Filter data in appropriate range
-median_val = median(rawOriError);
-mad_val = median(abs(rawOriError - median_val));
-mad_val = mad_val / 0.6745;
-lower_bound = median_val - 3*mad_val;
-upper_bound = median_val + 3*mad_val;
-rawOriError(rawOriError < lower_bound | rawOriError > upper_bound) = NaN;
 
 data.dat.absOriError = absOriError;
 data.dat.rawOriError = rawOriError;
@@ -33,14 +25,6 @@ absErr_S = abs(stimOri_S - reportedOri_S);
 absOriError_S = min(absErr_S, 180 - absErr_S);  % ensures error is in [0, 90]
 rawError_S = stimOri_S - reportedOri_S;
 rawOriError_S = mod(rawError_S + 90, 180) - 90;
-
-% Filter data in appropriate range
-median_val = median(rawOriError_S);
-mad_val = median(abs(rawOriError_S - median_val));
-mad_val = mad_val / 0.6745;
-lower_bound = median_val - 3*mad_val;
-upper_bound = median_val + 3*mad_val;
-rawOriError_S(rawOriError_S < lower_bound | rawOriError_S > upper_bound) = NaN;
 
 data.dat.absOriError_S = absOriError_S;
 data.dat.rawOriError_S = rawOriError_S;
@@ -95,25 +79,21 @@ grpRawErrs_Std_by_conf  = zeros(2, numel(grpIdxes));
 grpAbsErrs_Mean_by_conf = zeros(2, numel(grpIdxes));
 grpAbsErrs_Std_by_conf  = zeros(2, numel(grpIdxes));
 
-grpRawErrs_Mean_S = zeros(1, numel(grpIdxes));
-grpRawErrs_Std_S  = zeros(1, numel(grpIdxes));
-grpAbsErrs_Mean_S = zeros(1, numel(grpIdxes));
-grpAbsErrs_Std_S  = zeros(1, numel(grpIdxes));
-
-grpRawErrs_Mean_by_conf_S = zeros(2, numel(grpIdxes));
-grpRawErrs_Std_by_conf_S  = zeros(2, numel(grpIdxes));
-grpAbsErrs_Mean_by_conf_S = zeros(2, numel(grpIdxes));
-grpAbsErrs_Std_by_conf_S  = zeros(2, numel(grpIdxes));
-
-% TODO: plot RMSE error as well to account for bias
 
 for i=1:numel(grpIdxes)
     gidx_ = grpIdxes(i);
     grpOriErr = rawOriError(G == gidx_);
     grpOriErr_Abs = absOriError(G == gidx_);
 
-    fltOriErr = grpOriErr;
-    pd = fitdist(fltOriErr(~isnan(fltOriErr)), 'Normal');
+    median_val = median(grpOriErr);
+    mad_val = median(abs(grpOriErr - median_val));
+    sigma_mad = mad_val / 0.6745;
+    mad_val = sigma_mad;
+    
+    fltOriErr = grpOriErr( grpOriErr > (median_val - 3*mad_val) & grpOriErr < (median_val + 3*mad_val) );
+    % fltOriErr = grpOriErr( zscore(grpOriErr) < 3 ); % Data within 3 SD
+    % fltOriErr = grpOriErr( abs(grpOriErr) < 50 );
+    pd = fitdist(fltOriErr, 'Normal');
     
     mu = pd.mu;
     sigma = pd.sigma;
@@ -139,52 +119,25 @@ for i=1:numel(grpIdxes)
     grpAbsErrs_Std_by_conf(1, i)  = std(absErrLC) / sqrt(numel(absErrLC));
     grpAbsErrs_Std_by_conf(2, i)  = std(absErrHC) / sqrt(numel(absErrHC));
 
-    pdHC = fitdist(rawErrHC(~isnan(rawErrHC)), 'Normal');
-    pdLC = fitdist(rawErrLC(~isnan(rawErrLC)), 'Normal');
+       
+    median_val = median(rawErrHC);
+    mad_val = median(abs(rawErrHC - median_val));
+    mad_val = mad_val / 0.6745;
+    rawErrHC = rawErrHC( rawErrHC > (median_val - 3*mad_val) & rawErrHC < (median_val + 3*mad_val) );
+    % rawErrHC = rawErrHC( zscore(rawErrHC) < 3 ); % Data within 3 SD
+    pdHC = fitdist(rawErrHC, 'Normal');
+
+    median_val = median(rawErrLC);
+    mad_val = median(abs(rawErrLC - median_val));
+    mad_val = mad_val / 0.6745;
+    rawErrLC = rawErrLC( rawErrLC > (median_val - 3*mad_val) & rawErrLC < (median_val + 3*mad_val) );
+    % rawErrLC = rawErrLC( zscore(rawErrLC) < 3 ); % Data within 3 SD
+    pdLC = fitdist(rawErrLC, 'Normal');
     
     grpRawErrs_Std_by_conf(1, i)  = pdLC.sigma;
     grpRawErrs_Std_by_conf(2, i)  = pdHC.sigma;
     grpRawErrs_Mean_by_conf(1, i) = pdLC.mu;
     grpRawErrs_Mean_by_conf(2, i) = pdHC.mu;
-
-    % Wrt sample mean
-    grpOriErr_S = rawOriError_S(G == gidx_);
-    grpOriErr_Abs_S = absOriError_S(G == gidx_);
-    
-    fltOriErr_S = grpOriErr_S;
-    pd = fitdist(fltOriErr_S(~isnan(fltOriErr_S)), 'Normal');
-    
-    mu = pd.mu;
-    sigma = pd.sigma;
-
-    grpRawErrs_Mean_S(i) = mu;
-    grpRawErrs_Std_S(i)  = sigma;
-    grpAbsErrs_Mean_S(i) = mean(grpOriErr_Abs_S);
-    grpAbsErrs_Std_S(i)  = std(grpOriErr_Abs_S) / sqrt(numel(grpOriErr_Abs_S));
-
-    % Split by confidence
-    reportedConf = data.dat.reportedConf(G == gidx_);
-    idxHC = reportedConf == 1;
-    idxLC = reportedConf == 0;
-
-    rawErrHC = grpOriErr_S(idxHC);
-    rawErrLC = grpOriErr_S(idxLC);
-    absErrHC = grpOriErr_Abs_S(idxHC);
-    absErrLC = grpOriErr_Abs_S(idxLC);
-    
-    grpAbsErrs_Mean_by_conf_S(1, i) = mean(absErrLC);
-    grpAbsErrs_Mean_by_conf_S(2, i) = mean(absErrHC);
-    grpAbsErrs_Std_by_conf_S(1, i)  = std(absErrLC) / sqrt(numel(absErrLC));
-    grpAbsErrs_Std_by_conf_S(2, i)  = std(absErrHC) / sqrt(numel(absErrHC));
-    
-    pdHC = fitdist(rawErrHC(~isnan(rawErrHC)), 'Normal');
-    pdLC = fitdist(rawErrLC(~isnan(rawErrLC)), 'Normal');
-    
-    grpRawErrs_Std_by_conf_S(1, i)  = pdLC.sigma;
-    grpRawErrs_Std_by_conf_S(2, i)  = pdHC.sigma;
-    grpRawErrs_Mean_by_conf_S(1, i) = pdLC.mu;
-    grpRawErrs_Mean_by_conf_S(2, i) = pdHC.mu;
-
 
 end
 
@@ -211,21 +164,6 @@ grpRawErrs_Mean_by_conf(2, :) = grpRawErrs_Mean_by_conf(2, sidx);
 grpRawErrs_Std_by_conf(1, :)  = grpRawErrs_Std_by_conf(1, sidx);
 grpRawErrs_Std_by_conf(2, :)  = grpRawErrs_Std_by_conf(2, sidx);
 
-% WRT sample mean
-grpRawErrs_Mean_S = grpRawErrs_Mean_S(sidx);
-grpRawErrs_Std_S  = grpRawErrs_Std_S(sidx);
-grpAbsErrs_Mean_S = grpAbsErrs_Mean_S(sidx);
-grpAbsErrs_Std_S  = grpAbsErrs_Std_S(sidx);
-
-grpAbsErrs_Mean_by_conf_S(1, :) = grpAbsErrs_Mean_by_conf_S(1, sidx);
-grpAbsErrs_Mean_by_conf_S(2, :) = grpAbsErrs_Mean_by_conf_S(2, sidx);
-grpAbsErrs_Std_by_conf_S(1, :)  = grpAbsErrs_Std_by_conf_S(1, sidx);
-grpAbsErrs_Std_by_conf_S(2, :)  = grpAbsErrs_Std_by_conf_S(2, sidx);
-
-grpRawErrs_Mean_by_conf_S(1, :) = grpRawErrs_Mean_by_conf_S(1, sidx);
-grpRawErrs_Mean_by_conf_S(2, :) = grpRawErrs_Mean_by_conf_S(2, sidx);
-grpRawErrs_Std_by_conf_S(1, :)  = grpRawErrs_Std_by_conf_S(1, sidx);
-grpRawErrs_Std_by_conf_S(2, :)  = grpRawErrs_Std_by_conf_S(2, sidx);
 
 % Generate x-axis labels as combined strings like "0.2|5"
 xLabels = strcat(string(sDur), ', ', string(sContrast), ', ', string(sSpread));
@@ -243,7 +181,7 @@ hold on
 
 % Plot each group
 for i = 1:numel(grpIdxes)
-    grpOriErr = data.dat.rawOriErrorOrg(G == sidx(i));
+    grpOriErr = rawOriError(G == sidx(i));
     meanErr = mean(grpOriErr(~isnan(grpOriErr)));
     xPts = i + 0.4*(rand(1, numel(grpOriErr)) - 0.5);
 
@@ -347,14 +285,11 @@ end
 
 figure 
 subplot(2, 1, 1)
-hold on
 errorbar(binCenters, avgErrs, stdErrs, ...
     'k', 'LineStyle', '-', 'LineWidth', 1.5, 'CapSize', 10)
 xlabel("Orientation (deg)")
 ylabel("Error")
-yline(0, LineStyle="--")
 title("Orientation bias")
-hold off
 
 subplot(2, 1, 2)
 x = 1:numel(unique(binIdx));
@@ -366,7 +301,6 @@ xlabel("Orientation (deg)")
 xticks(x)
 xticklabels( round(binCenters))
 legend
-title("Orientation dependent std dev")
 hold off
 
 %% Histogram
@@ -385,9 +319,17 @@ for i=1:numel(sidx)
 
     subplot(2, numel(sidx)/2, i)
     grpOriErr = rawOriError(G == gidx_);
-    histogram(data.dat.rawOriErrorOrg(G == gidx_), -90:3:90, Normalization="pdf")
+    histogram(grpOriErr, -90:3:90, Normalization="pdf")
     
-    pd = fitdist(grpOriErr(~isnan(grpOriErr)), 'Normal');
+    median_val = median(grpOriErr);
+    mad_val = median(abs(grpOriErr - median_val));
+    sigma_mad = mad_val / 0.6745;
+    mad_val = sigma_mad;
+    
+    fltOriErr = grpOriErr( grpOriErr > (median_val - 3*mad_val) & grpOriErr < (median_val + 3*mad_val) );
+    % fltOriErr = grpOriErr( zscore(grpOriErr) < 3 ); % Data within 3 SD
+    % fltOriErr = grpOriErr( abs(grpOriErr) < 50 );
+    pd = fitdist(fltOriErr, 'Normal');
     x_values = -90:1:90;
     y = pdf(pd, x_values);
 
@@ -421,10 +363,17 @@ for confVal = [0, 1]
         grpOriErr = rawOriError(G == gidx_);
         reportedConf = data.dat.reportedConf(G == gidx_);
         grpOriErr = grpOriErr(reportedConf == confVal);
-        % histogram(grpOriErr, -90:3:90, Normalization="pdf")
-        histogram(data.dat.rawOriErrorOrg((G == gidx_) & (data.dat.reportedConf == confVal)), -90:3:90, Normalization="pdf")
+        histogram(grpOriErr, -90:3:90, Normalization="pdf")
         
-        pd = fitdist(grpOriErr(~isnan(grpOriErr)), 'Normal');
+        median_val = median(grpOriErr);
+        mad_val = median(abs(grpOriErr - median_val));
+        sigma_mad = mad_val / 0.6745;
+        mad_val = sigma_mad;
+        
+        fltOriErr = grpOriErr( grpOriErr > (median_val - 3*mad_val) & grpOriErr < (median_val + 3*mad_val) );
+        % fltOriErr = grpOriErr( zscore(grpOriErr) < 3 ); % Data within 3 SD
+        % fltOriErr = grpOriErr( abs(grpOriErr) < 50 );
+        pd = fitdist(fltOriErr, 'Normal');
         x_values = -90:1:90;
         y = pdf(pd, x_values);
     
@@ -484,11 +433,11 @@ for i=1:numel(sidx)
     sigma_mad = mad_val / 0.6745;
     mad_val = sigma_mad;
     
-    % fltOriErr = grpOriErr( zscore(grpOriErr) < 3 ); % Data within 3 SD
-    % fltOriErr = grpOriErr(abs(grpOriErr) < 50);
+%     fltOriErr = grpOriErr( zscore(grpOriErr) < 3 ); % Data within 3 SD
+%     fltOriErr = grpOriErr(abs(grpOriErr) < 50);
     % fltOriErr = grpOriErr( abs(grpOriErr) < 50 );
-    % fltOriErr = grpOriErr( grpOriErr > (median_val - 3*mad_val) & grpOriErr < (median_val + 3*mad_val) );
-    pd = fitdist(grpOriErr(~isnan(grpOriErr)), 'Normal');
+    fltOriErr = grpOriErr( grpOriErr > (median_val - 3*mad_val) & grpOriErr < (median_val + 3*mad_val) );
+    pd = fitdist(fltOriErr, 'Normal');
     x = -90:1:90;
     y = pdf(pd, x_values);
 
@@ -529,7 +478,7 @@ stdError = grpAbsErrs_Std;
 
 % Plot with error bars
 figure;
-subplot(2, 4, 1)
+subplot(2, 2, 1)
 % plot(stdError)
 errorbar(meanError, stdError, 'o-', LineWidth=2);
 xticks(1:length(xLabels));
@@ -547,7 +496,7 @@ summaryTable = groupsummary(datOK, {'stimDur', 'stimContrast', 'stimSpread', 're
 disp(summaryTable)
 
 % Plot with error bars
-subplot(2, 4, 2)
+subplot(2, 2, 2)
 hold on
 errorbar(grpAbsErrs_Mean_by_conf(1, :), grpAbsErrs_Std_by_conf(1, :), 'o-', LineWidth=2, DisplayName='LC');
 errorbar(grpAbsErrs_Mean_by_conf(2, :), grpAbsErrs_Std_by_conf(2, :), 'o-', LineWidth=2, DisplayName='HC');
@@ -568,7 +517,7 @@ hold off
 stdError = grpRawErrs_Std;
 
 % Plot with error bars
-subplot(2, 4, 3)
+subplot(2, 2, 3)
 plot(stdError, LineWidth=2)
 % errorbar(meanError, stdError, 'o-', LineWidth=2);
 xticks(1:length(xLabels));
@@ -580,7 +529,7 @@ title('Raw Error');
 grid on;
 
 % By confidence
-subplot(2, 4, 4)
+subplot(2, 2, 4)
 hold on
 plot(grpRawErrs_Std_by_conf(1, :), LineWidth=2, DisplayName='LC')
 plot(grpRawErrs_Std_by_conf(2, :), LineWidth=2, DisplayName='HC')
@@ -595,136 +544,54 @@ legend
 hold off
 
 
-% sample mean
-% If subject is using sample mean to report orientation then variability
-% wrt sample mean should ideally be less than wrt actual mean.
-meanError = grpAbsErrs_Mean_S;
-stdError = grpAbsErrs_Std_S;
-
-% Plot with error bars
-subplot(2, 4, 5)
-% plot(stdError)
-errorbar(meanError, stdError, 'o-', LineWidth=2);
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("StimDur, StimContrast, StimSpread" + newline + "(increasing uncertainty)")
-ylabel('Orientation Error (deg)');
-title('Absolute Error (sample mean)');
-
-grid on;
-
-
-% Plot with error bars
-subplot(2, 4, 6)
-hold on
-errorbar(grpAbsErrs_Mean_by_conf_S(1, :), grpAbsErrs_Std_by_conf_S(1, :), 'o-', LineWidth=2, DisplayName='LC');
-errorbar(grpAbsErrs_Mean_by_conf_S(2, :), grpAbsErrs_Std_by_conf_S(2, :), 'o-', LineWidth=2, DisplayName='HC');
-
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("StimDur, StimContrast, StimSpread" + newline + "(increasing uncertainty)")
-ylabel('Orientation Error (deg)');
-title('Absolute Error');
-grid on;
-legend
-hold off
-
-% grpRawErrs_Mean_by_conf = zeros(2, numel(grpIdxes));
-% grpRawErrs_Std_by_conf  = zeros(2, numel(grpIdxes));
-
-% meanError = grpRawErrs_Mean;
-stdError = grpRawErrs_Std_S;
-
-% Plot with error bars
-subplot(2, 4, 7)
-plot(stdError, LineWidth=2)
-% errorbar(meanError, stdError, 'o-', LineWidth=2);
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("StimDur, StimContrast, StimSpread" + newline + "(increasing uncertainty)")
-ylabel('Std dev (deg)');
-title('Raw Error');
-
-grid on;
-
-% By confidence
-subplot(2, 4, 8)
-hold on
-plot(grpRawErrs_Std_by_conf_S(1, :), LineWidth=2, DisplayName='LC')
-plot(grpRawErrs_Std_by_conf_S(2, :), LineWidth=2, DisplayName='HC')
-
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("StimDur, StimContrast, StimSpread" + newline + "(increasing uncertainty)")
-ylabel('Std dev (deg)');
-title('Raw Error');
-grid on;
-legend
-hold off
-
-
-%% RMSE error
-
-summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread', 'stimDur'}, ...
-                            {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
-
-meanError = summaryTable.fun1_rawOriError(sidx);
-
-figure
-subplot(1, 2, 1)
-plot(1:numel(meanError), meanError, 'o-', LineWidth=2);
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("increasing uncertainty")
-ylabel('Orientation Error (deg)');
-title('RMSE error');
-grid on;
-
-
-% MSE err split by confidence
-summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread', 'stimDur', 'reportedConf'}, ...
-                            {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
-
-mseHC = zeros(1, numel(sContrast));
-mseLC = zeros(1, numel(sContrast));
-
-for i = 1:numel(sContrast)
-    rowHC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
-        summaryTable.stimSpread == sSpread(i) & ...
-        summaryTable.stimDur == sDur(i) & ...
-        summaryTable.reportedConf == 1, :);
-    mseHC(i) = rowHC.fun1_rawOriError;
-
-    rowLC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
-        summaryTable.stimSpread == sSpread(i) & ...
-        summaryTable.stimDur == sDur(i) & ...
-        summaryTable.reportedConf == 0, :);
-    if ~isempty(rowLC)
-        mseLC(i) = rowLC.fun1_rawOriError;
-    else
-        mseLC(i) = NaN;
-    end
-
-end
-
-subplot(1, 2, 2)
-hold on
-plot(1:numel(mseHC), mseHC, 'o-', LineWidth=2, DisplayName="HC");
-plot(1:numel(mseLC), mseLC, 'o-', LineWidth=2, DisplayName="LC");
-xticks(1:length(xLabels));
-xticklabels(xLabels);
-xlabel("increasing uncertainty")
-ylabel('Orientation Error (deg)');
-title('MSE error');
-grid on;
-hold off
-
-
-
-%%
-
-x = linspace(0, 180, 100);
-y = 9 + (16 - 9)*abs(sind(2*x));
-
-figure
-plot(x, abs(y))
+% %%
+% % MSE error
+% summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread'}, ...
+%                             {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
+% 
+% meanError = summaryTable.fun1_rawOriError(sidx);
+% 
+% subplot(2, 2, 3)
+% plot(1:numel(meanError), meanError, 'o-', LineWidth=2);
+% xticks(1:length(xLabels));
+% xticklabels(xLabels);
+% xlabel("StimContrast, StimSpread" + newline + "(increasing uncertainty)")
+% ylabel('Orientation Error (deg)');
+% title('MSE error');
+% grid on;
+% 
+% % MSE err split by confidence
+% summaryTable = groupsummary(datOK, {'stimContrast', 'stimSpread', 'reportedConf'}, ...
+%                             {@(x) sqrt(nanmean(x.^2)), 'numel'}, 'rawOriError');
+% 
+% mseHC = zeros(1, numel(sContrast));
+% mseLC = zeros(1, numel(sContrast));
+% 
+% for i = 1:numel(sContrast)
+%     rowHC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+%         summaryTable.stimSpread == sSpread(i) & ...
+%         summaryTable.reportedConf == 1, :);
+%     mseHC(i) = rowHC.fun1_rawOriError;
+% 
+%     rowLC = summaryTable(summaryTable.stimContrast == sContrast(i) & ...
+%         summaryTable.stimSpread == sSpread(i) & ...
+%         summaryTable.reportedConf == 0, :);
+%     if ~isempty(rowLC)
+%         mseLC(i) = rowLC.fun1_rawOriError;
+%     else
+%         mseLC(i) = NaN;
+%     end
+% 
+% end
+% 
+% subplot(2, 2, 4)
+% hold on
+% plot(1:numel(mseHC), mseHC, 'o-', LineWidth=2, DisplayName="HC");
+% plot(1:numel(mseLC), mseLC, 'o-', LineWidth=2, DisplayName="LC");
+% xticks(1:length(xLabels));
+% xticklabels(xLabels);
+% xlabel("StimContrast, StimSpread" + newline + "(increasing uncertainty)")
+% ylabel('Orientation Error (deg)');
+% title('MSE error');
+% grid on;
+% hold off
