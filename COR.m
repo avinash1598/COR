@@ -1352,7 +1352,8 @@ if absPerceptualError > maxTolerableError
     return
 end
 
-y1 = 11 + (16 - 11)*abs(sind(2*trueOri));
+y1 = 11 + (15 - 11)*abs(sind(2*trueOri));
+fprintf("%.2f, %.2f \n", trueOri, y1);
 % y1 = 15;
 c1 = 1;
 c2 = 0.3;
