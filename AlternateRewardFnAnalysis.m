@@ -69,13 +69,10 @@ clear all
 maxTolerableError = 25; % In degrees
 x = linspace(-30, 30, 201);
 
-y1 = 16; %20
+y1 = 11; %20
 x1 = 10;
-sigmaErrSD_C0_015 = 8.85;
-prob = cdf('Normal', x1, 0, sigmaErrSD_C0_015) - cdf('Normal', -x1, 0, sigmaErrSD_C0_015);
-disp(prob)
 
-c1 = 1;
+c1 = 5;
 c2 = 0.3;
 
 m1 = c1/y1;
@@ -84,19 +81,15 @@ m2 = c2 / maxTolerableError; %m1 - (c1 - c2)/x1;
 yHC = - m1 * sign(x) .* x + c1; yHC(abs(x) > y1) = 0.3*yHC(abs(x) > y1);
 yLC = - m2 * sign(x) .* x + c2; yLC(abs(x) > maxTolerableError) = 0;
 
-x2 = -x1;
 
 figure
 hold on
 plot(x, yHC, 'DisplayName', "HC", 'LineWidth', 2)
 plot(x, yLC, 'DisplayName', "LC", 'LineWidth', 2)
-plot(x, exp(-abs(x).^2 / ( 2 * 4^2) ))
 xlabel("Perceptual error")
 ylabel("Reward")
 legend
 
-xline(x1, 'LineWidth', 2, 'LineStyle', "--", 'HandleVisibility', "off")
-xline(x2, 'LineWidth', 2, 'LineStyle', "--", 'HandleVisibility', "off")
 yline(0, 'LineStyle', "--")
 hold off
 

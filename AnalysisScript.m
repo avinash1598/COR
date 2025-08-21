@@ -1,8 +1,9 @@
-% close all
+close all
 clear all
 
-data = load('COR14.mat');
+% data = load('COR14.mat');
 % data = load('COR15.mat');
+data = load('COR16.mat');
 
 stimOri = data.dat.stimOri;
 reportedOri = data.dat.reportedOri;

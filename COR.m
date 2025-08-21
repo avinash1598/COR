@@ -1334,6 +1334,47 @@ end
 % 
 % end
 
+% %% Calculate reward
+% function reward = calcReward(trueOri, reportedOri, confReport)
+% 
+% % Note: reported orientation is already pi-periodic, true orientation as
+% % well
+% maxTolerableError = 25; % In degrees
+% absPerceptualError = abs(trueOri - reportedOri);
+% absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
+% 
+% if absPerceptualError > maxTolerableError
+%     if confReport == 1
+%         reward = -0.5;
+%     else
+%         reward = 0;
+%     end
+%     return
+% end
+% 
+% y1 = 11 + (15 - 11)*abs(sind(2*trueOri));
+% fprintf("%.2f, %.2f \n", trueOri, y1);
+% % y1 = 15;
+% c1 = 1;
+% c2 = 0.3;
+% m1 = c1/y1;
+% m2 = c2 / maxTolerableError; %m1 - (c1 - c2)/x1;
+% 
+% if confReport == 1 % High confidence
+%     gHC = - m1 * absPerceptualError + c1;
+%     if absPerceptualError > y1
+%         gHC = 0.3*gHC;
+%     end
+%     reward = gHC;
+% elseif confReport == 0  % Low confidence
+%     gLC = - m2 * absPerceptualError + c2;
+%     reward = gLC;
+% else
+%     error('Unknown confidence report: %s. Must be "HC" or "LC".', confReport);
+% end
+% 
+% end
+
 %% Calculate reward
 function reward = calcReward(trueOri, reportedOri, confReport)
 
@@ -1345,7 +1386,7 @@ absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 if absPerceptualError > maxTolerableError
     if confReport == 1
-        reward = -0.5;
+        reward = -3;
     else
         reward = 0;
     end
@@ -1354,8 +1395,7 @@ end
 
 y1 = 11 + (15 - 11)*abs(sind(2*trueOri));
 fprintf("%.2f, %.2f \n", trueOri, y1);
-% y1 = 15;
-c1 = 1;
+c1 = 5;
 c2 = 0.3;
 m1 = c1/y1;
 m2 = c2 / maxTolerableError; %m1 - (c1 - c2)/x1;
