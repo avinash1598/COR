@@ -1395,7 +1395,7 @@ end
 
 y1 = 11 + (15 - 11)*abs(sind(2*trueOri)); % TODO: smaller range
 fprintf("%.2f, %.2f \n", trueOri, y1);
-c1 = 5;
+c1 = 1; % 5
 c2 = 0.3;
 m1 = c1/y1;
 m2 = c2 / maxTolerableError; %m1 - (c1 - c2)/x1;
