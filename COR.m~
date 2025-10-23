@@ -111,7 +111,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                               
 stimContrast = [0.015, 0.05]; % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 6;                                                           % Number of blocks 
+numBlocks   = 3;                                                           % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 nTrialsPerBlock = numel(stimOrientations)*8;    % TODO: delete
 
@@ -144,8 +144,7 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 % 
 combinations = [
     0.1500    5.0000    0.0250
-    % 0.3000   40.0000    0.0500
-    0.1500   25.0000    0.0500
+    0.3000   40.0000    0.0500
     0.3000    5.0000    0.0150
     0.3000   25.0000    0.0150
     0.0500    5.0000    0.0500
@@ -237,10 +236,6 @@ end
 %% Reward
 baselineReward = 10; % If done over multiple session, then this should probably be reloaded from the previous session
 currentTotalReward = baselineReward; % This will not be baseline if a session file for this subject already exist
-
-if exist('metaData', 'var')
-    currentTotalReward = metaData.currentTotalReward;
-end
 
 %%
 tSessionStart = GetSecs;
@@ -597,12 +592,10 @@ try
         fprintf('Current total reward: $%.2f \n', currentTotalReward);
         disp(summaryTable1)
         disp(summaryTable2)
-        
-        metaData.currentTotalReward = currentTotalReward;
-        
-        save(matFile,'dat', 'description', 'metaData'); % Save info
+
+        save(matFile,'dat', 'description'); % Save info
         endOfBlockScreen(psychToolBoxConfig) % Show waiting screen
-        
+
     end
     
     % Announce the end of the session
@@ -1265,16 +1258,16 @@ maxTolerableError = 25; % In degrees
 absPerceptualError = abs(trueOri - reportedOri);
 absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
-y1 = 12 + (14 - 12)*abs(sind(2*trueOri)); %12; fprintf("%.2f, %.2f \n", trueOri, y1);
-x1 = 11 + (13 - 11)*abs(sind(2*trueOri));
-c1 = 0.5; % 0.2
+y1 = 12; % 11 + (15 - 11)*abs(sind(2*trueOri)); % fprintf("%.2f, %.2f \n", trueOri, y1);
+x1 = 11;
+c1 = 0.2;
 m1 = - c1/y1;
 m2 = ( m1*x1 + c1 ) / ( x1 - maxTolerableError );
 c2 = -  m2*maxTolerableError;
 
 if absPerceptualError > maxTolerableError
     if confReport == 1
-        reward = -c1; %-1.6*c1;
+        reward = -1.6*c1;
     else
         reward = 0;
     end
