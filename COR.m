@@ -117,7 +117,7 @@ nTrialsPerBlock = numel(stimOrientations)*8;    % TODO: delete
 
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
-beeperDur = 0.15;
+beeperDur = 0.05;
 durFeedbackFixBreak = .5;
 checkFixationMaxDur = 2;
 respScreenGazeHoldDur = 0.2;
@@ -141,7 +141,7 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 
 % % Hack
 % combinations = [combinations(2, :); combinations(4:end, :)]; %TODO: delete
-% 
+% have three levels of time instead
 combinations = [
     0.1500    5.0000    0.0250
     % 0.3000   40.0000    0.0500
@@ -529,6 +529,21 @@ try
             reward = calcReward(trlCfg.stimOri, reportedOri, confReport);
             currentTotalReward = currentTotalReward + reward;
             
+            % Show beeper and wait for the response screen
+            if reward > 0
+                Beeper(800, .4, beeperDur);
+            else
+                nItr = 3;
+                for i=1:nItr
+                    Beeper(20, .4, beeperDur/5);
+                    Beeper(30, .4, beeperDur/5);
+                end
+            end
+            
+            % WaitSecs(respSuccessWaitDur - beeperDur);
+            WaitSecs(respSuccessWaitDur);
+            
+            % Show reward screen
             if reward <= 0
                 DrawFormattedText(psychToolBoxConfig.w,['' num2str(reward,'%.3f')],'center', ...
                     psychToolBoxConfig.yCenter - 30,[255 0 0]);
@@ -616,7 +631,7 @@ try
     fprintf('Data file ''%s'' received\n', edfFile);
         
     % Save the .mat file
-    save(matFile,'dat', 'description');
+    save(matFile,'dat', 'description', 'metaData');
     
     % Clean up
     quitExperiment();
@@ -1225,11 +1240,15 @@ while ~responseGiven
     
     Screen('Flip', psychToolBoxConfig.w);
     
-    if responseGiven
-        Beeper(400, .4, beeperDur);
-    end
+%     if responseGiven
+%         Beeper(200, .4, beeperDur);
+% %         for i=1:3
+% %             Beeper(20, .4, 0.01);
+% %             Beeper(30, .4, 0.01);
+% %         end
+%     end
     
-    WaitSecs(sampleDuration);
+%     WaitSecs(sampleDuration);
 end
 
 confReport = NaN;
@@ -1249,9 +1268,9 @@ respData.reportedArc   = reportedArc;
 respData.reportedConf  = confReport;
 respData.reactionTime  = responseTime - tStartOfRespScreen;
 
-if responseGiven
-    WaitSecs(respSuccessWaitDur - sampleDuration - beeperDur);
-end
+% if responseGiven
+%     WaitSecs(respSuccessWaitDur - sampleDuration - beeperDur);
+% end
 
 end
 
@@ -1302,7 +1321,7 @@ function abortTrial(w, durFeedbackFixBreak, beeperDur)
 % Give feedback
 DrawFormattedText(w, 'Poor fixation!', 'center', 'center');
 Screen('Flip', w);
-Beeper(400, .4, beeperDur);
+Beeper(200, .4, beeperDur);
 WaitSecs( durFeedbackFixBreak - beeperDur );
 
 % TODO: edit the data file
