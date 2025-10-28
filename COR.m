@@ -144,7 +144,6 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 % have three levels of time instead
 combinations = [
     0.1500    5.0000    0.0250
-    % 0.3000   40.0000    0.0500
     0.1500   25.0000    0.0500
     0.3000    5.0000    0.0150
     0.3000   25.0000    0.0150
@@ -153,6 +152,18 @@ combinations = [
     0.0500   25.0000    0.0500
     0.3000   25.0000    0.0500
 ];
+
+% combinations = [
+%     0.1500    15.0000    0.0250
+%     % 0.3000   40.0000    0.0500
+%     0.1500   35.0000    0.0500
+%     0.3000    15.0000    0.0150
+%     0.3000   35.0000    0.0150
+%     0.0500    15.0000    0.0500
+%     0.3000    15.0000    0.0500
+%     0.0500   35.0000    0.0500
+%     0.3000   35.0000    0.0500
+% ];
 
 comboRepeated = repmat(combinations, length(stimOrientations), 1);  % Repeat the combinations for each orientation (10 times)
 orientationsRepeated = repelem(stimOrientations(:), size(combinations, 1));  % Repeat orientations to match combination matrix
