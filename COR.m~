@@ -102,7 +102,7 @@ end
 % Contrast 0.018, duration 0.06, loc 4.5, spread 45 
 interTrlInterval = 1;                                                      % Inter trial interval in seconds
 fixationDur = 0.5;                                                         % Fixation duration in seconds
-stimOrientations = [0:15:179, 179]; %linspace(0, 179, 10);                                   % 
+stimOrientations = [0 15]; %[0:15:179, 179]; %linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
 stimLoc_y = 5;                                                           % Stimulus location in visual field degrees
 stimDur = [0.05, 0.3];  %0.05 0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
@@ -122,6 +122,7 @@ beeperDur = 0.05;
 durFeedbackFixBreak = .5;
 checkFixationMaxDur = 2;
 respScreenGazeHoldDur = 0.2;
+stimToRespScreenTransitionDelay = 0.5;
 trlStatus = 0;                                                             % 0 for not completed yet, 1 for successful completion
 
 % Simple vectors
@@ -145,10 +146,10 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 % have three levels of time instead
 % Easy
 combinations = [
-    0.3000    10.0000    0.0100
+    0.3000    10.0000    0.0150
     0.3000    10.0000    0.1000
     0.3000    40.0000    0.1000
-    0.3000    40.0000    0.0100
+    0.3000    40.0000    0.0150
     
     0.1000    10.0000    0.1000
     0.1000    40.0000    0.1000
@@ -200,6 +201,8 @@ reportedOriVec         = nan(nTrials,1);
 reportedConfVec        = nan(nTrials,1);
 rewardVec              = nan(nTrials,1);
 respTimeVec            = nan(nTrials,1);
+rawOriErrorVec         = nan(nTrials,1);
+trlErrorVec            = nan(nTrials,1);
 
 
 if ~exist('dat', 'var') % Data file does not exist, most likely first session
@@ -209,7 +212,7 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
         'fixationDur', 'stimLocX', 'stimLocY', 'stimDur', 'stimOri', 'stimSpread', 'stimContrast',... % TODO: independent and confounding variables
         'stimSampleMeanOri', 'stimSampleSpread', ...
         'respMaxDur', 'reportedOri','reportedConf','reward','reactionTime', ... % TODO: dependent variables
-        'trialStatus'
+        'trialStatus', 'rawOriError', 'trlError'
         };
     
     dat = table( ...
@@ -217,7 +220,7 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
             fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
             stimSampleMeanOriVec, stimSampleSpreadVec, ...
             respMaxDurVec, reportedOriVec, reportedConfVec, rewardVec, respTimeVec, ...
-            trlStatusVec, ...
+            trlStatusVec, rawOriErrorVec, trlErrorVec, ...
             'VariableNames', variableNames ...
         );
     
@@ -243,6 +246,8 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
         'Reward earned on this trial';...
         'Reaction time (time interval between onset of response screen and choice commit) (in s)';...
         'Trial status - whether trial is completed or not'; ...
+        'Raworientation error - Wrapped to -90 to 90 degrees'; ...
+        'Trial Error - subject performance {1: Error (negative reward), 0: otherwise}'; ...
         }),...
         'VariableNames',{'description'},'RowNames',variableNames');
 
@@ -252,7 +257,7 @@ elseif newSession % dat file already exists and this is a new session
         fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
         stimSampleMeanOriVec, stimSampleSpreadVec, ...
         respMaxDurVec, reportedOriVec, reportedConfVec, rewardVec, respTimeVec, ...
-        trlStatusVec, ...
+        trlStatusVec, rawOriErrorVec, trlErrorVec, ...
         'VariableNames', dat.Properties.VariableNames ...
     );
     
@@ -262,7 +267,7 @@ end
 %% Reward
 baselineReward = 10; % If done over multiple session, then this should probably be reloaded from the previous session
 currentTotalReward       = baselineReward; % This will not be baseline if a session file for this subject already exist
-currentTotalRewardPoints = convertRewardValToPoints(baselineReward);
+currentTotalRewardPoints = 0; %convertRewardValToPoints(baselineReward);
 
 if exist('metaData', 'var')
     currentTotalReward = metaData.currentTotalReward;
@@ -389,6 +394,13 @@ try
         % Dummy value - for ITI calculations
         tEndPrevTrl = GetSecs;
         
+        % Print trial info at the end of each trial
+        colsToPrint = {'stimOri', 'stimDur', 'stimSpread', 'stimContrast', 'reportedOri', 'reportedConf', 'rawOriError', 'trlError'};
+%         headers = dat(1, colsToPrint).Properties.VariableNames;
+%         fprintf('%5s  %5s  %5s  %5s  %5s  %5s  %5s  %5s', headers{:});
+%         fprintf("\n")
+        disp(dat{1, colsToPrint}) % Print dummy row
+        
         while nCompletedTrialsCurrBlock < nTrialsPerBlock
         % while nCompletedTrialsCurrBlock < 10
             
@@ -509,9 +521,10 @@ try
                 continue;
             end
             
-%             Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg.fixRect);
-%             Screen('Flip', psychToolBoxConfig.w);
-%             WaitSecs(1); % Wait 0.5 secs
+            % Wait for some time before showing response scrren
+            Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg.fixRect);
+            Screen('Flip', psychToolBoxConfig.w);
+            WaitSecs(stimToRespScreenTransitionDelay); % Wait 0.5 secs
             
             % === Response screen ====
             % Screen('Flip', psychToolBoxConfig.w);
@@ -583,7 +596,7 @@ try
                         psychToolBoxConfig.yCenter - 30,[0 50 0]);
             end
             
-            DrawFormattedText(psychToolBoxConfig.w, ['$' num2str(currentTotalRewardPoints, '%.2f')], ...
+            DrawFormattedText(psychToolBoxConfig.w, ['' num2str(currentTotalRewardPoints, '%.2f')], ...
                 'center', psychToolBoxConfig.yCenter + 30, 255);
             Screen('Flip', psychToolBoxConfig.w);
             Eyelink('Message','FEEDBACK');
@@ -595,6 +608,9 @@ try
             % Record everything - Like reaction time, choice and other data
             % in dat file.
             
+            rawError = reportedOri - trlCfg.stimOri;
+            rawOriError = mod(rawError + 90, 180) - 90;
+        
             % Save info in file
             dat.stimSampleMeanOri(trlCfgIdx)  = trlCfg.stimOri + (stimMetrics.meanAngle - oriRefStim);
             dat.stimSampleSpread(trlCfgIdx)   = stimMetrics.stdAngle;
@@ -603,11 +619,17 @@ try
             dat.reward(trlCfgIdx)             = reward;
             dat.reactionTime(trlCfgIdx)       = respData.reactionTime;
             dat.trialStatus(trlCfgIdx)        = 1; % This trial was completed
+            dat.rawOriError(trlCfgIdx)        = rawOriError;
+            dat.trlError(trlCfgIdx)           = reward < 0; % Error if negative reward
             
             % Update number of completed trials in this block
             nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
             currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
+            % Print End of trial stats
+            %fprintf('%5s  %5s  %5s  %5s  %5s  %5s  %5s  %5s', num2str(dat{trlCfgIdx, colsToPrint}));
+            %fprintf("\n")
+            disp(dat{trlCfgIdx, colsToPrint})
         end
         
         
@@ -624,9 +646,9 @@ try
         thisBlockData = dat( (dat.session == sessionNum) & (dat.block == blockIDx), :);
         stimOri = thisBlockData.stimOri; reportedOri = thisBlockData.reportedOri;
         
-        absErr = abs(stimOri - reportedOri);
+        absErr = abs(reportedOri - stimOri);
         absOriError = min(absErr, 180 - absErr);  % ensures error is in [0, 90]
-        rawError = stimOri - reportedOri;
+        rawError = reportedOri - stimOri;
         rawOriError = mod(rawError + 90, 180) - 90;
         
         thisBlockData.absOriError = absOriError;
@@ -639,17 +661,20 @@ try
                                     {'mean', 'std', 'numel'}, 'absOriError');
 
 
+        fprintf("\n")                        
         fprintf("Block duration %.2fs \n", GetSecs - tStartBlock);
         fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
         fprintf('Current total reward: $%.2f \n', currentTotalReward);
+        fprintf('Percent Correct (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError))
+        fprintf("\n")    
         disp(summaryTable1)
         disp(summaryTable2)
         
         metaData.currentTotalReward         = currentTotalReward;
-        mettaData.currentTotalRewardPoints  = currentTotalRewardPoints;
+        metaData.currentTotalRewardPoints  = currentTotalRewardPoints;
         
         save(matFile,'dat', 'description', 'metaData'); % Save info
-        endOfBlockScreen(psychToolBoxConfig) % Show waiting screen
+        endOfBlockScreen(psychToolBoxConfig, currentTotalReward) % Show waiting screen
         
     end
     
@@ -770,7 +795,7 @@ tStart = GetSecs;
 
 % Display end-of-block message
 DrawFormattedText(psychToolBoxConfig.w, ...
-    'End of block. ['$' num2str(currentTotalRewardPoints, '%.2f')\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)', ...
+    ['End of block. \n\nCurrent reward in USD: $',  num2str(rewardUSD, '%.2f'), '\n\n\n\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)'], ...
     'center', 'center', 255);
 Screen('Flip', psychToolBoxConfig.w);
 
