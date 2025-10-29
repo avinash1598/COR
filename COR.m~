@@ -649,7 +649,7 @@ try
         mettaData.currentTotalRewardPoints  = currentTotalRewardPoints;
         
         save(matFile,'dat', 'description', 'metaData'); % Save info
-        endOfBlockScreen(psychToolBoxConfig, ceil(currentTotalReward)) % Show waiting screen
+        endOfBlockScreen(psychToolBoxConfig) % Show waiting screen
         
     end
     
@@ -770,7 +770,7 @@ tStart = GetSecs;
 
 % Display end-of-block message
 DrawFormattedText(psychToolBoxConfig.w, ...
-    ['End of block. \n\nCurrent reward in USD: $',  num2str(rewardUSD, '%d'), '\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)'], ...
+    'End of block. ['$' num2str(currentTotalRewardPoints, '%.2f')\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)', ...
     'center', 'center', 255);
 Screen('Flip', psychToolBoxConfig.w);
 
