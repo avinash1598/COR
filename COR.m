@@ -102,7 +102,7 @@ end
 % Contrast 0.018, duration 0.06, loc 4.5, spread 45 
 interTrlInterval = 1;                                                      % Inter trial interval in seconds
 fixationDur = 0.5;                                                         % Fixation duration in seconds
-stimOrientations = [0 15]; %[0:15:179, 179]; %linspace(0, 179, 10);                                   % 
+stimOrientations = [0:15:179, 179]; %linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
 stimLoc_y = 5;                                                           % Stimulus location in visual field degrees
 stimDur = [0.05, 0.3];  %0.05 0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
@@ -145,14 +145,24 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 % combinations = [combinations(2, :); combinations(4:end, :)]; %TODO: delete
 % have three levels of time instead
 % Easy
+% combinations = [
+%     0.3000    10.0000    0.0150
+%     0.3000    10.0000    0.0500
+%     0.3000    45.0000    0.0500
+%     0.3000    45.0000    0.0150
+%     
+%     0.1000    10.0000    0.0700
+%     0.1000    45.0000    0.0700
+% ];
+
 combinations = [
-    0.3000    10.0000    0.0150
-    0.3000    10.0000    0.0500
-    0.3000    45.0000    0.0500
-    0.3000    45.0000    0.0150
+    0.3000    10.0000    0.0180
+    0.3000    10.0000    0.0800
+    0.3000    35.0000    0.0800
+    0.3000    35.0000    0.0180
     
-    0.1000    10.0000    0.1000
-    0.1000    45.0000    0.1000
+    0.1000    10.0000    0.0800
+    0.1000    35.0000    0.0800
 ];
 
 % Medium
@@ -368,8 +378,9 @@ try
         totalTrialsTillPrevSession = 0;
     end
     
-    fprintf("Session %d, block %d, Trials till prev session %d \n", ...
+    fprintf("Session %d, block %d, Trials till prev session %d", ...
         sessionNum, startBlockIdx, totalTrialsTillPrevSession);
+    fprintf("\n")
     
     % Run trials
     for blockIDx=startBlockIdx:numBlocks
@@ -578,7 +589,7 @@ try
             currentTotalRewardPoints = currentTotalRewardPoints + rewardPoints;
             
             % Show beeper and wait for the response screen
-            if rewardPoints >= 0
+            if rewardPoints > 0
                 Beeper(800, .4, beeperDur);
             else
                 nItr = 3;
@@ -631,15 +642,16 @@ try
             currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
             % Print End of trial stats
-            fprintf("%.2f \t %.2f \t %.2f \t %.2f \t %.2f \t %d \t %.2f \t %d", ...
-                dat{trlCfgIdx, colsToPrint}.stimOri, ...
-                dat{trlCfgIdx, colsToPrint}.stimDur, ...
-                dat{trlCfgIdx, colsToPrint}.stimSpread, ...
-                dat{trlCfgIdx, colsToPrint}.stimContrast, ...
-                dat{trlCfgIdx, colsToPrint}.reportedOri, ...
-                dat{trlCfgIdx, colsToPrint}.reportedConf, ...
-                dat{trlCfgIdx, colsToPrint}.rawOriError, ...
-                dat{trlCfgIdx, colsToPrint}.trlError);
+            fprintf("%.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %d \t\t %.2f \t\t %d", ...
+                dat(trlCfgIdx, colsToPrint).stimOri, ...
+                dat(trlCfgIdx, colsToPrint).stimDur, ...
+                dat(trlCfgIdx, colsToPrint).stimSpread, ...
+                dat(trlCfgIdx, colsToPrint).stimContrast, ...
+                dat(trlCfgIdx, colsToPrint).reportedOri, ...
+                dat(trlCfgIdx, colsToPrint).reportedConf, ...
+                dat(trlCfgIdx, colsToPrint).rawOriError, ...
+                dat(trlCfgIdx, colsToPrint).trlError);
+            fprintf("\n")
         
         end
         
@@ -1537,8 +1549,8 @@ absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 % y1 = 12 + (14 - 12)*abs(sind(2*trueOri)); %12; fprintf("%.2f, %.2f \n", trueOri, y1);
 % x1 = 11 + (13 - 11)*abs(sind(2*trueOri));
-y1 = 14; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
-x1 = 12;
+y1 = 15; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
+x1 = 13;
 c1 = 0.2; % Set to 0.1 if the limit is 100 USD %0.5; % 0.2
 m1 = - c1/y1;
 m2 = ( m1*x1 + c1 ) / ( x1 - maxTolerableError );

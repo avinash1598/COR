@@ -102,7 +102,7 @@ end
 % Contrast 0.018, duration 0.06, loc 4.5, spread 45 
 interTrlInterval = 1;                                                      % Inter trial interval in seconds
 fixationDur = 0.5;                                                         % Fixation duration in seconds
-stimOrientations = [0 15]; %[0:15:179, 179]; %linspace(0, 179, 10);                                   % 
+stimOrientations = [0:15:179, 179]; %linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
 stimLoc_y = 5;                                                           % Stimulus location in visual field degrees
 stimDur = [0.05, 0.3];  %0.05 0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
@@ -145,14 +145,24 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 % combinations = [combinations(2, :); combinations(4:end, :)]; %TODO: delete
 % have three levels of time instead
 % Easy
+% combinations = [
+%     0.3000    10.0000    0.0150
+%     0.3000    10.0000    0.0500
+%     0.3000    45.0000    0.0500
+%     0.3000    45.0000    0.0150
+%     
+%     0.1000    10.0000    0.0700
+%     0.1000    45.0000    0.0700
+% ];
+
 combinations = [
-    0.3000    10.0000    0.0150
-    0.3000    10.0000    0.1000
-    0.3000    40.0000    0.1000
-    0.3000    40.0000    0.0150
+    0.3000    10.0000    0.0200
+    0.3000    10.0000    0.0800
+    0.3000    35.0000    0.0800
+    0.3000    35.0000    0.0150
     
-    0.1000    10.0000    0.1000
-    0.1000    40.0000    0.1000
+    0.1000    10.0000    0.0800
+    0.1000    35.0000    0.0800
 ];
 
 % Medium
@@ -203,7 +213,6 @@ rewardVec              = nan(nTrials,1);
 respTimeVec            = nan(nTrials,1);
 rawOriErrorVec         = nan(nTrials,1);
 trlErrorVec            = nan(nTrials,1);
-
 
 if ~exist('dat', 'var') % Data file does not exist, most likely first session
     % Finalize the table
@@ -264,6 +273,8 @@ elseif newSession % dat file already exists and this is a new session
     dat = [dat; newData];  % Append new rows to the existing table
 end
 
+trlBlockData = dat(randperm(numel(dat(:, {'subject'})), 10), :);
+
 %% Reward
 baselineReward = 10; % If done over multiple session, then this should probably be reloaded from the previous session
 currentTotalReward       = baselineReward; % This will not be baseline if a session file for this subject already exist
@@ -274,6 +285,8 @@ if exist('metaData', 'var')
     currentTotalRewardPoints = metaData.currentTotalRewardPoints;
 end
 
+% Other stats
+abortTrlCnt = 0;
 %%
 tSessionStart = GetSecs;
 try
@@ -365,9 +378,9 @@ try
         totalTrialsTillPrevSession = 0;
     end
     
-    fprintf("Session %d, block %d, Trials till prev session %d \n", ...
+    fprintf("Session %d, block %d, Trials till prev session %d", ...
         sessionNum, startBlockIdx, totalTrialsTillPrevSession);
-        
+    fprintf("\n")
     
     % Run trials
     for blockIDx=startBlockIdx:numBlocks
@@ -396,10 +409,8 @@ try
         
         % Print trial info at the end of each trial
         colsToPrint = {'stimOri', 'stimDur', 'stimSpread', 'stimContrast', 'reportedOri', 'reportedConf', 'rawOriError', 'trlError'};
-%         headers = dat(1, colsToPrint).Properties.VariableNames;
-%         fprintf('%5s  %5s  %5s  %5s  %5s  %5s  %5s  %5s', headers{:});
-%         fprintf("\n")
-        disp(dat{1, colsToPrint}) % Print dummy row
+        % disp(dat(1, colsToPrint)) % Print dummy row
+        fprintf("stimOri \t stimDur \t stimSpread \t stimContrast \t reportedOri \t reportedConf \t rawOriError \t trlError")
         
         while nCompletedTrialsCurrBlock < nTrialsPerBlock
         % while nCompletedTrialsCurrBlock < 10
@@ -515,6 +526,8 @@ try
                     error("Block length greater than what it should be!")
                 end
                 
+                abortTrlCnt = abortTrlCnt + 1;
+
                 abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
                 % Everytime trial is aborted, update the timer for ITI calculation
                 [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w);
@@ -553,6 +566,8 @@ try
                     'center', 'center',[255 0 0]);
                 Screen('Flip', psychToolBoxConfig.w);
                 
+                abortTrlCnt = abortTrlCnt + 1;
+
                 % All aboted trial will be tried again towards the end
                 abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
                 % Everytime trial is aborted, update the timer for ITI calculation
@@ -574,7 +589,7 @@ try
             currentTotalRewardPoints = currentTotalRewardPoints + rewardPoints;
             
             % Show beeper and wait for the response screen
-            if rewardPoints >= 0
+            if rewardPoints > 0
                 Beeper(800, .4, beeperDur);
             else
                 nItr = 3;
@@ -588,16 +603,16 @@ try
             WaitSecs(respSuccessWaitDur);
 
             % Show reward screen
-            if rewardPoints < 0
-                DrawFormattedText(psychToolBoxConfig.w,['' num2str(rewardPoints,'%d')],'center', ...
+            if rewardPoints <= 0
+                DrawFormattedText(psychToolBoxConfig.w,['-' num2str(abs(rewardPoints),'%d')],'center', ...
                     psychToolBoxConfig.yCenter - 30,[255 0 0]);
             else
                 DrawFormattedText(psychToolBoxConfig.w,['+' num2str(rewardPoints,'%d')],'center', ...
                         psychToolBoxConfig.yCenter - 30,[0 50 0]);
             end
             
-            DrawFormattedText(psychToolBoxConfig.w, ['' num2str(currentTotalRewardPoints, '%.2f')], ...
-                'center', psychToolBoxConfig.yCenter + 30, 255);
+            DrawFormattedText(psychToolBoxConfig.w, ['' num2str(currentTotalRewardPoints, '%d')], ...
+                'center', psychToolBoxConfig.yCenter + 30, [0 0 0]);
             Screen('Flip', psychToolBoxConfig.w);
             Eyelink('Message','FEEDBACK');
             WaitSecs(durFeedback);
@@ -627,16 +642,24 @@ try
             currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
             % Print End of trial stats
-            %fprintf('%5s  %5s  %5s  %5s  %5s  %5s  %5s  %5s', num2str(dat{trlCfgIdx, colsToPrint}));
-            %fprintf("\n")
-            disp(dat{trlCfgIdx, colsToPrint})
+            fprintf("%.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %d \t\t %.2f \t\t %d", ...
+                dat(trlCfgIdx, colsToPrint).stimOri, ...
+                dat(trlCfgIdx, colsToPrint).stimDur, ...
+                dat(trlCfgIdx, colsToPrint).stimSpread, ...
+                dat(trlCfgIdx, colsToPrint).stimContrast, ...
+                dat(trlCfgIdx, colsToPrint).reportedOri, ...
+                dat(trlCfgIdx, colsToPrint).reportedConf, ...
+                dat(trlCfgIdx, colsToPrint).rawOriError, ...
+                dat(trlCfgIdx, colsToPrint).trlError);
+            fprintf("\n")
+        
         end
         
         
         % End of block related operations
         Eyelink('Message', 'END'); % Send event to eyelink
         Eyelink('StopRecording'); % Stop recording
-    
+        
         % Close the .edf file
         WaitSecs(1);
         Eyelink('CloseFile');
@@ -661,17 +684,22 @@ try
                                     {'mean', 'std', 'numel'}, 'absOriError');
 
 
-        fprintf("\n")                        
-        fprintf("Block duration %.2fs \n", GetSecs - tStartBlock);
-        fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
-        fprintf('Current total reward: $%.2f \n', currentTotalReward);
-        fprintf('Percent Correct (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError))
-        fprintf("\n")    
+        blockDuration = GetSecs - tStartBlock;
+        minutes = floor(blockDuration / 60);
+        seconds = mod(blockDuration, 60);
+         
         disp(summaryTable1)
         disp(summaryTable2)
         
+        fprintf("\n\n")                        
+        fprintf("Block duration: %d min %.2f s\n", minutes, seconds);
+        fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
+        fprintf('Current total reward: $%.2f \n', currentTotalReward);
+        fprintf('Percent Correct (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
+        fprintf("\n\n")   
+
         metaData.currentTotalReward         = currentTotalReward;
-        metaData.currentTotalRewardPoints  = currentTotalRewardPoints;
+        metaData.currentTotalRewardPoints   = currentTotalRewardPoints;
         
         save(matFile,'dat', 'description', 'metaData'); % Save info
         endOfBlockScreen(psychToolBoxConfig, currentTotalReward) % Show waiting screen
@@ -682,7 +710,7 @@ try
     DrawFormattedText(psychToolBoxConfig.w,'The end', 'center', 'center', psychToolBoxConfig.white);
     Screen('Flip', psychToolBoxConfig.w);
     WaitSecs(3);
-
+    
     % Save the .edf file
     fprintf('\nReceiving data file ''%s''\n', edfFile);
     Eyelink('ReceiveFile', edfFile, pwd, 1);
@@ -757,6 +785,183 @@ end
 % disp("done")
 
 %% ----------------------------- FUNCTION ----------------------------- %%
+
+%% Show trial block
+function showTrainBlock(trlBlockData)
+
+% Initialize Psychtoolbox
+psychToolBoxConfig = initPsychToolBox();   
+
+% --- ASK USER WHETHER TO RUN BLOCK ---
+DrawFormattedText(psychToolBoxConfig.w, ...
+    'Do you want to run this trial block?\n\nPress Y for YES, N for NO.', ...
+    'center', 'center', psychToolBoxConfig.white);
+Screen('Flip', psychToolBoxConfig.w);
+
+% Wait for a key press
+runBlock = false; % default
+while true
+    [keyIsDown, ~, keyCode] = KbCheck;
+    if keyIsDown
+        if keyCode(KbName('Y'))  % yes
+            runBlock = true;
+            break;
+        elseif keyCode(KbName('N'))  % no
+            runBlock = false;
+            break;
+        end
+    end
+end
+
+% Clear screen after response
+Screen('Flip', psychToolBoxConfig.w);
+
+if runBlock
+       
+    fixationWinCfg = initializeFixationWin(psychToolBoxConfig.ppd, ...
+            psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, ...
+            psychToolBoxConfig.black, psychToolBoxConfig.white);
+    
+    oriRefStim = 45; 
+    
+    % Calibrate eyelink at start of each block
+    eyeUsed = setupEyeLink(psychToolBoxConfig.w);
+    
+    % Wait for user to start the experiment
+    beginExpScreen(psychToolBoxConfig)
+    Eyelink('Message','TRIAL BLOCK START');
+    
+    nTrialInTrialBlock = numel( trlBlockData{:, 1} );
+    currCursor = 1;
+    nCompletedTrialsCurrBlock = 0;
+    tEndPrevTrl = GetSecs;
+    
+    while nCompletedTrialsCurrBlock < nTrialInTrialBlock
+    
+        trlCfgIdx = currCursor;
+        trlCfg = trlBlockData(trlCfgIdx, :);
+        
+        stimCfg = generateStimuli(psychToolBoxConfig, trlCfg.stimDur, trlCfg.stimSpread, oriRefStim);      
+        stimParam = drawStimuli(stimCfg, trlCfg, psychToolBoxConfig);
+        
+        WaitSecs( trlCfg.ITI - ( GetSecs - tEndPrevTrl ) );
+    
+        % === Fixation point ====
+        fixnData = showFixation(psychToolBoxConfig, fixationWinCfg);
+    
+        % Wait indefinately untill subject maintains fixation
+        [fixationHeld, eyeUsed] = checkFixation(psychToolBoxConfig, eyeUsed, fixationWinCfg.fixThreshold, ...
+            fixnData.tStart, trlCfg.fixationDur, ...
+            psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, psychToolBoxConfig.quitKey, ...
+            checkFixationMaxDur);
+                
+        % === Stimulus Phase ===
+        fixationHeld = true;
+        
+        % Loop over frames
+        for iF = 1:length(stimParam.movietex)
+            Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg.fixRect);
+            Screen('DrawTextures', psychToolBoxConfig.w, stimParam.movietex(iF), ...
+                [], stimParam.movieRect, oriRefStim - trlCfg.stimOri);
+            Screen('Flip', psychToolBoxConfig.w);
+            
+            % fprintf("%.2f= ", trlCfg.stimOri - stimMetrics.meanAngle)
+            % For each frame make sure fixation is maintained
+            % Abort trial if subject breaks fixation
+            % Send event to eyelink
+            if iF == 1
+                Eyelink('Message','STIMULUS');
+            end
+            
+            % Keep this inside the loop to avoid any timing issues
+            % Check fixation
+            if Eyelink('NewFloatSampleAvailable') > 0
+                evt = Eyelink('NewestFloatSample');
+                gx = evt.gx(eyeUsed+1); % [left eye gaze x, right eye gaze x] +1 because this is matlab
+                gy = evt.gy(eyeUsed+1);
+                % Abort trial if subject break fixation
+                if norm([psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter]-[gx,gy]) > fixationWinCfg.fixThreshold
+                    fixationHeld = false; 
+                    break
+                end
+            end
+        end
+    
+        if ~fixationHeld
+            
+            nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
+            currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
+
+            abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
+            % Everytime trial is aborted, update the timer for ITI calculation
+            [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w);
+            continue;
+        end
+    
+        % === Response screen ====
+        respData = showResponseScreen(psychToolBoxConfig, fixationWinCfg, ...
+            trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur);
+                
+        if ~respData.responseGiven
+            
+            nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
+            currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
+
+            % All aboted trial will be tried again towards the end
+            abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
+            % Everytime trial is aborted, update the timer for ITI calculation
+            [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w);
+            continue;
+        end
+    
+        % This trial was a success. Give reward, show feedback
+        % sampleTrueOri = trlCfg.stimOri;
+        reportedOri   = respData.reportedAngle;
+        confReport    = respData.reportedConf;
+        
+        % Calculate reward
+        reward = calcReward(trlCfg.stimOri, reportedOri, confReport);
+        currentTotalReward = currentTotalReward + reward;
+        
+        rewardPoints = convertRewardValToPoints(reward);
+        
+        % Show beeper and wait for the response screen
+        if rewardPoints >= 0
+            Beeper(800, .4, beeperDur);
+        else
+            nItr = 3;
+            for i=1:nItr
+                Beeper(20, .4, beeperDur/5);
+                Beeper(30, .4, beeperDur/5);
+            end
+        end
+        
+        % WaitSecs(respSuccessWaitDur - beeperDur);
+        WaitSecs(respSuccessWaitDur);
+    
+        % Show reward screen
+        if rewardPoints < 0
+            DrawFormattedText(psychToolBoxConfig.w,['' num2str(rewardPoints,'%d')],'center', ...
+                psychToolBoxConfig.yCenter - 30,[255 0 0]);
+        else
+            DrawFormattedText(psychToolBoxConfig.w,['+' num2str(rewardPoints,'%d')],'center', ...
+                    psychToolBoxConfig.yCenter - 30,[0 50 0]);
+        end
+        
+        Screen('Flip', psychToolBoxConfig.w);
+        Eyelink('Message','FEEDBACK');
+        WaitSecs(durFeedback);
+        
+        % Start timer for inter-trial interval
+        [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w);     
+        
+        nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
+        currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
+    end
+
+end
+
+end
 
 %% Experiment begin screen
 function beginExpScreen(psychToolBoxConfig)
@@ -1344,8 +1549,8 @@ absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 % y1 = 12 + (14 - 12)*abs(sind(2*trueOri)); %12; fprintf("%.2f, %.2f \n", trueOri, y1);
 % x1 = 11 + (13 - 11)*abs(sind(2*trueOri));
-y1 = 14; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
-x1 = 12;
+y1 = 15; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
+x1 = 13;
 c1 = 0.2; % Set to 0.1 if the limit is 100 USD %0.5; % 0.2
 m1 = - c1/y1;
 m2 = ( m1*x1 + c1 ) / ( x1 - maxTolerableError );
