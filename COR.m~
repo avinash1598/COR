@@ -155,15 +155,33 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 %     0.1000    45.0000    0.0700
 % ];
 
+% Tien
+% combinations = [
+%     0.3000    10.0000    0.0180
+%     0.3000    10.0000    0.0800
+%     0.3000    35.0000    0.0800
+%     0.3000    35.0000    0.0180
+%     
+%     0.1000    10.0000    0.0800
+%     0.1000    35.0000    0.0800
+% ];
+
 combinations = [
-    0.3000    10.0000    0.0200
+    0.3000    10.0000    0.0120
     0.3000    10.0000    0.0800
     0.3000    35.0000    0.0800
-    0.3000    35.0000    0.0150
+    0.3000    35.0000    0.0120
     
-    0.1000    10.0000    0.0800
-    0.1000    35.0000    0.0800
+    0.0500    10.0000    0.0800
+    0.0500    35.0000    0.0800
 ];
+
+rewardConfig.maxTolerableError = 30;
+rewardConfig.y1                = 15;
+rewardConfig.x1                = 14;
+rewardConfig.c1                = 0.2;
+rewardConfig.g1                = 0.3;
+rewardConfig.g2                = 0.3;
 
 % Medium
 % combinations = [
@@ -581,7 +599,7 @@ try
             confReport    = respData.reportedConf;
             
             % Calculate reward
-            reward = calcReward(trlCfg.stimOri, reportedOri, confReport);
+            reward = calcReward(trlCfg.stimOri, reportedOri, confReport, rewardConfig);
             currentTotalReward = currentTotalReward + reward;
             
             % Conver reward value to points - 100 points = 2 dollar (but maybe make it 1 dollar)
@@ -695,7 +713,7 @@ try
         fprintf("Block duration: %d min %.2f s\n", minutes, seconds);
         fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
         fprintf('Current total reward: $%.2f \n', currentTotalReward);
-        fprintf('Percent Correct (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
+        fprintf('Percent Wrong (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
         fprintf("\n\n")   
 
         metaData.currentTotalReward         = currentTotalReward;
@@ -1539,11 +1557,11 @@ end
 
 
 %% Calculate reward
-function reward = calcReward(trueOri, reportedOri, confReport)
+function reward = calcReward(trueOri, reportedOri, confReport, rewardConfig)
 
 % Note: reported orientation is already pi-periodic, true orientation as
 % well
-maxTolerableError = 25; % In degrees
+maxTolerableError = rewardConfig.maxTolerableError; % 25; % In degrees
 absPerceptualError = abs(trueOri - reportedOri);
 absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 

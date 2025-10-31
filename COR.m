@@ -155,15 +155,33 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 %     0.1000    45.0000    0.0700
 % ];
 
+% Tien
+% combinations = [
+%     0.3000    10.0000    0.0180
+%     0.3000    10.0000    0.0800
+%     0.3000    35.0000    0.0800
+%     0.3000    35.0000    0.0180
+%     
+%     0.1000    10.0000    0.0800
+%     0.1000    35.0000    0.0800
+% ];
+
 combinations = [
     0.3000    10.0000    0.0180
     0.3000    10.0000    0.0800
-    0.3000    35.0000    0.0800
-    0.3000    35.0000    0.0180
+    0.3000    40.0000    0.0800
+    0.3000    40.0000    0.0180
     
-    0.1000    10.0000    0.0800
-    0.1000    35.0000    0.0800
+    0.0500    10.0000    0.0800
+    0.0500    40.0000    0.0800
 ];
+
+rewardConfig.maxTolerableError = 36;
+rewardConfig.y1                = 18;
+rewardConfig.x1                = 16.1;
+rewardConfig.c1                = 0.2;
+rewardConfig.g1                = 0.3;
+rewardConfig.g2                = 0.3;
 
 % Medium
 % combinations = [
@@ -581,7 +599,7 @@ try
             confReport    = respData.reportedConf;
             
             % Calculate reward
-            reward = calcReward(trlCfg.stimOri, reportedOri, confReport);
+            reward = calcReward(trlCfg.stimOri, reportedOri, confReport, rewardConfig);
             currentTotalReward = currentTotalReward + reward;
             
             % Conver reward value to points - 100 points = 2 dollar (but maybe make it 1 dollar)
@@ -642,7 +660,7 @@ try
             currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
             % Print End of trial stats
-            fprintf("%.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %d \t\t %.2f \t\t %d", ...
+            fprintf("%.2f \t\t %.4f \t\t %.2f \t\t %.4f \t\t %.2f \t\t %d \t\t %.2f \t\t %d", ...
                 dat(trlCfgIdx, colsToPrint).stimOri, ...
                 dat(trlCfgIdx, colsToPrint).stimDur, ...
                 dat(trlCfgIdx, colsToPrint).stimSpread, ...
@@ -695,7 +713,7 @@ try
         fprintf("Block duration: %d min %.2f s\n", minutes, seconds);
         fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
         fprintf('Current total reward: $%.2f \n', currentTotalReward);
-        fprintf('Percent Correct (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
+        fprintf('Percent Wrong (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
         fprintf("\n\n")   
 
         metaData.currentTotalReward         = currentTotalReward;
@@ -1539,26 +1557,26 @@ end
 
 
 %% Calculate reward
-function reward = calcReward(trueOri, reportedOri, confReport)
+function reward = calcReward(trueOri, reportedOri, confReport, rewardConfig)
 
 % Note: reported orientation is already pi-periodic, true orientation as
 % well
-maxTolerableError = 25; % In degrees
+maxTolerableError = rewardConfig.maxTolerableError; % 25; % In degrees
 absPerceptualError = abs(trueOri - reportedOri);
 absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 % y1 = 12 + (14 - 12)*abs(sind(2*trueOri)); %12; fprintf("%.2f, %.2f \n", trueOri, y1);
 % x1 = 11 + (13 - 11)*abs(sind(2*trueOri));
-y1 = 15; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
-x1 = 13;
-c1 = 0.2; % Set to 0.1 if the limit is 100 USD %0.5; % 0.2
+y1 = rewardConfig.y1; %15; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
+x1 = rewardConfig.x1; %14
+c1 = rewardConfig.c1; %0.2 % Set to 0.1 if the limit is 100 USD %0.5; % 0.2
 m1 = - c1/y1;
 m2 = ( m1*x1 + c1 ) / ( x1 - maxTolerableError );
 c2 = -  m2*maxTolerableError;
 
 if absPerceptualError > maxTolerableError
     if confReport == 1
-        reward = -c1; %-1.6*c1;
+        reward = -rewardConfig.g2*c1; %-1.6*c1;
     else
         reward = 0;
     end
@@ -1568,7 +1586,7 @@ end
 if confReport == 1 % High confidence
     gHC = m1 * absPerceptualError + c1;
     if absPerceptualError > y1
-        gHC = 0.5*gHC;
+        gHC = rewardConfig.g1*gHC;
     end
     reward = gHC;
 elseif confReport == 0  % Low confidence
