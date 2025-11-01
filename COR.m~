@@ -102,7 +102,7 @@ end
 % Contrast 0.018, duration 0.06, loc 4.5, spread 45 
 interTrlInterval = 1;                                                      % Inter trial interval in seconds
 fixationDur = 0.5;                                                         % Fixation duration in seconds
-stimOrientations = [0:15:179, 179]; %linspace(0, 179, 10);                                   % 
+stimOrientations = [0 15]; %0:15:179; %linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
 stimLoc_y = 5;                                                           % Stimulus location in visual field degrees
 stimDur = [0.05, 0.3];  %0.05 0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
@@ -111,7 +111,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                               
 stimContrast = [0.015, 0.05]; % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 6;                                                           % Number of blocks 
+numBlocks   = 1; %6;                                                           % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 % nTrialsPerBlock = numel(stimOrientations)*8;    % TODO: delete
 nTrialsPerBlock = numel(stimOrientations)*6;
@@ -167,18 +167,18 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 % ];
 
 combinations = [
-    0.3000    10.0000    0.0120
+    0.3000    10.0000    0.0180
     0.3000    10.0000    0.0800
-    0.3000    35.0000    0.0800
-    0.3000    35.0000    0.0120
+    0.3000    40.0000    0.0800
+    0.3000    40.0000    0.0180
     
     0.0500    10.0000    0.0800
-    0.0500    35.0000    0.0800
+    0.0500    40.0000    0.0800
 ];
 
-rewardConfig.maxTolerableError = 30;
-rewardConfig.y1                = 15;
-rewardConfig.x1                = 14;
+rewardConfig.maxTolerableError = 36;
+rewardConfig.y1                = 18;
+rewardConfig.x1                = 16.1;
 rewardConfig.c1                = 0.2;
 rewardConfig.g1                = 0.3;
 rewardConfig.g2                = 0.3;
@@ -231,6 +231,7 @@ rewardVec              = nan(nTrials,1);
 respTimeVec            = nan(nTrials,1);
 rawOriErrorVec         = nan(nTrials,1);
 trlErrorVec            = nan(nTrials,1);
+trlAbortedVec          = nan(nTrials,1);
 
 if ~exist('dat', 'var') % Data file does not exist, most likely first session
     % Finalize the table
@@ -239,7 +240,7 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
         'fixationDur', 'stimLocX', 'stimLocY', 'stimDur', 'stimOri', 'stimSpread', 'stimContrast',... % TODO: independent and confounding variables
         'stimSampleMeanOri', 'stimSampleSpread', ...
         'respMaxDur', 'reportedOri','reportedConf','reward','reactionTime', ... % TODO: dependent variables
-        'trialStatus', 'rawOriError', 'trlError'
+        'trialStatus', 'rawOriError', 'trlError', 'trlAborted'
         };
     
     dat = table( ...
@@ -247,7 +248,7 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
             fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
             stimSampleMeanOriVec, stimSampleSpreadVec, ...
             respMaxDurVec, reportedOriVec, reportedConfVec, rewardVec, respTimeVec, ...
-            trlStatusVec, rawOriErrorVec, trlErrorVec, ...
+            trlStatusVec, rawOriErrorVec, trlErrorVec, trlAbortedVec, ...
             'VariableNames', variableNames ...
         );
     
@@ -275,6 +276,7 @@ if ~exist('dat', 'var') % Data file does not exist, most likely first session
         'Trial status - whether trial is completed or not'; ...
         'Raworientation error - Wrapped to -90 to 90 degrees'; ...
         'Trial Error - subject performance {1: Error (negative reward), 0: otherwise}'; ...
+        'Trial aborted - set it ot 1 if trial was aborted (note these are tried again and eventually completed)'; ...
         }),...
         'VariableNames',{'description'},'RowNames',variableNames');
 
@@ -284,7 +286,7 @@ elseif newSession % dat file already exists and this is a new session
         fixDurVec, stimLocVec_x, stimLocVec_y, stimDurVec, stimOriVec, stimDispersionVec, stimContrastVec, ...
         stimSampleMeanOriVec, stimSampleSpreadVec, ...
         respMaxDurVec, reportedOriVec, reportedConfVec, rewardVec, respTimeVec, ...
-        trlStatusVec, rawOriErrorVec, trlErrorVec, ...
+        trlStatusVec, rawOriErrorVec, trlErrorVec, trlAbortedVec, ...
         'VariableNames', dat.Properties.VariableNames ...
     );
     
@@ -295,7 +297,7 @@ trlBlockData = dat(randperm(numel(dat(:, {'subject'})), 10), :);
 
 %% Reward
 baselineReward = 10; % If done over multiple session, then this should probably be reloaded from the previous session
-currentTotalReward       = baselineReward; % This will not be baseline if a session file for this subject already exist
+currentTotalReward       = 0; % This will not be baseline if a session file for this subject already exist
 currentTotalRewardPoints = 0; %convertRewardValToPoints(baselineReward);
 
 if exist('metaData', 'var')
@@ -426,9 +428,10 @@ try
         tEndPrevTrl = GetSecs;
         
         % Print trial info at the end of each trial
-        colsToPrint = {'stimOri', 'stimDur', 'stimSpread', 'stimContrast', 'reportedOri', 'reportedConf', 'rawOriError', 'trlError'};
+        colsToPrint = {'block', 'trial', 'stimOri', 'stimDur', 'stimSpread', 'stimContrast', 'reportedOri', 'reportedConf', 'rawOriError', 'trlError'};
         % disp(dat(1, colsToPrint)) % Print dummy row
-        fprintf("stimOri \t stimDur \t stimSpread \t stimContrast \t reportedOri \t reportedConf \t rawOriError \t trlError")
+        fprintf("Block \t Trial \t stimOri \t stimDur \t stimSpread \t stimContrast \t reportedOri \t reportedConf \t rawOriError \t trlError")
+        fprintf("\n")
         
         while nCompletedTrialsCurrBlock < nTrialsPerBlock
         % while nCompletedTrialsCurrBlock < 10
@@ -532,6 +535,7 @@ try
                 % Append the current trial to the end of the block. Swap 
                 % the current trial at the "end of the block" for current
                 % session only
+                dat.trlAborted(trlCfgIdx) = 1; % Set abort status to 1
                 blockIdxes = find( (dat.session == sessionNum) & (dat.block == blockIDx) );
                 blockEndIdx = blockIdxes(end);
                 currTrlIdx = trlCfgIdx;
@@ -545,6 +549,8 @@ try
                 end
                 
                 abortTrlCnt = abortTrlCnt + 1;
+                fprintf("Trial aborted (Poor fixation)")
+                fprintf('\n')
 
                 abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
                 % Everytime trial is aborted, update the timer for ITI calculation
@@ -566,6 +572,7 @@ try
                 % Append the current trial to the end of the block. Swap 
                 % the current trial at the "end of the block" for current
                 % session only
+                dat.trlAborted(trlCfgIdx) = 1; % Set abort status to 1
                 blockIdxes = find( (dat.session == sessionNum) & (dat.block == blockIDx) );
                 blockEndIdx = blockIdxes(end);
                 currTrlIdx = trlCfgIdx;
@@ -585,7 +592,9 @@ try
                 Screen('Flip', psychToolBoxConfig.w);
                 
                 abortTrlCnt = abortTrlCnt + 1;
-
+                fprintf("Trial aborted (Response screen timeout)")
+                fprintf('\n')
+                
                 % All aboted trial will be tried again towards the end
                 abortTrial(psychToolBoxConfig.w, durFeedbackFixBreak, beeperDur);
                 % Everytime trial is aborted, update the timer for ITI calculation
@@ -600,11 +609,12 @@ try
             
             % Calculate reward
             reward = calcReward(trlCfg.stimOri, reportedOri, confReport, rewardConfig);
-            currentTotalReward = currentTotalReward + reward;
+            % currentTotalReward = currentTotalReward + reward;
             
             % Conver reward value to points - 100 points = 2 dollar (but maybe make it 1 dollar)
             rewardPoints = convertRewardValToPoints(reward);
             currentTotalRewardPoints = currentTotalRewardPoints + rewardPoints;
+            currentTotalReward = baselineReward + convertPointsToUSD(currentTotalRewardPoints);
             
             % Show beeper and wait for the response screen
             if rewardPoints > 0
@@ -660,7 +670,9 @@ try
             currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
             % Print End of trial stats
-            fprintf("%.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %.2f \t\t %d \t\t %.2f \t\t %d", ...
+            fprintf("%d \t %d \t %.2f \t\t %.4f \t\t %.2f \t\t %.4f \t\t %.2f \t\t %d \t\t %.2f \t\t %d", ...
+                dat(trlCfgIdx, colsToPrint).block, ...
+                dat(trlCfgIdx, colsToPrint).trial, ...
                 dat(trlCfgIdx, colsToPrint).stimOri, ...
                 dat(trlCfgIdx, colsToPrint).stimDur, ...
                 dat(trlCfgIdx, colsToPrint).stimSpread, ...
@@ -683,46 +695,67 @@ try
         Eyelink('CloseFile');
 
         
-        % Save info and print block stats
+        % =====================================================================
+        % Print stats 
+        % =====================================================================
         thisBlockData = dat( (dat.session == sessionNum) & (dat.block == blockIDx), :);
-        stimOri = thisBlockData.stimOri; reportedOri = thisBlockData.reportedOri;
         
-        absErr = abs(reportedOri - stimOri);
-        absOriError = min(absErr, 180 - absErr);  % ensures error is in [0, 90]
-        rawError = reportedOri - stimOri;
-        rawOriError = mod(rawError + 90, 180) - 90;
+        % Calculate maximum reward subject could have earned in this block
+        trueOriVec_        = thisBlockData.stimOri;
+        reportedOriVec_    = thisBlockData.reportedOri;
+        reportedConfigVec_ = thisBlockData.reportedConf;
         
-        thisBlockData.absOriError = absOriError;
-        thisBlockData.rawOriError = rawOriError;
+        thisBlockOptRewardData = calcMaxEarnedReward(trueOriVec_, ...
+        reportedOriVec_, reportedConfigVec_, rewardConfig);
         
-        summaryTable1 = groupsummary(thisBlockData, {'reportedConf'}, ...
+        summaryTable = groupsummary(thisBlockData, {'reportedConf'}, ...
                             {@(x) sqrt(nanmean(x.^2)), 'mean', 'std', 'numel'}, 'rawOriError');
-
-        summaryTable2 = groupsummary(thisBlockData, {'reportedConf'}, ...
-                                    {'mean', 'std', 'numel'}, 'absOriError');
-
 
         blockDuration = GetSecs - tStartBlock;
         minutes = floor(blockDuration / 60);
         seconds = mod(blockDuration, 60);
          
-        disp(summaryTable1)
-        disp(summaryTable2)
+        fprintf('\n\n')
+        disp(summaryTable)
         
-        fprintf("\n\n")                        
+        fprintf('\n\n')                        
         fprintf("Block duration: %d min %.2f s\n", minutes, seconds);
         fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
         fprintf('Current total reward: $%.2f \n', currentTotalReward);
-        fprintf('Percent Wrong (positive reward): %.2f', sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
-        fprintf("\n\n")   
-
+        fprintf('Percent Wrong (negative reward): %.2f \n', 100*sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
+        fprintf('Aborted trials: %d/%d', sum(thisBlockData.trlAborted), numel(thisBlockData.trlAborted))
+        fprintf('\n\n')
+        
         metaData.currentTotalReward         = currentTotalReward;
         metaData.currentTotalRewardPoints   = currentTotalRewardPoints;
         
         save(matFile,'dat', 'description', 'metaData'); % Save info
-        endOfBlockScreen(psychToolBoxConfig, currentTotalReward) % Show waiting screen
+        endOfBlockScreen(psychToolBoxConfig, currentTotalReward, thisBlockOptRewardData) % Show waiting screen
         
     end
+    
+    % =====================================================================
+    % Print stats - probably don't print session stats!
+    % A session is not necessarily run continuously in this design.
+    % =====================================================================
+    thisSessionData = dat( (dat.session == sessionNum), :);
+    summaryTable = groupsummary(thisSessionData, {'reportedConf'}, ...
+                            {@(x) sqrt(nanmean(x.^2)), 'mean', 'std', 'numel'}, 'rawOriError');
+
+    fprintf('\n\n')
+    disp(summaryTable)
+        
+    sessionDuration = GetSecs - tSessionStart;
+    minutes = floor(sessionDuration / 60);
+    seconds = mod(sessionDuration, 60);
+        
+    fprintf('\n\n')                        
+    fprintf("Session duration: %d min %.2f s\n", minutes, seconds);
+    fprintf("Completed trials %d/%d \n", sum(thisSessionData.trialStatus), numel(thisSessionData.trialStatus));
+    fprintf('Total earned reward: $%.2f \n', currentTotalReward);
+    fprintf('Percent Wrong (negative reward): %.2f\n', 100*sum(thisSessionData.trlError)/numel(thisSessionData.trlError)); % this should be less than 50%
+    fprintf('Aborted trials: %d/%d', sum(thisSessionData.trlAborted), numel(thisSessionData.trlAborted))
+    fprintf('\n\n')
     
     % Announce the end of the session
     DrawFormattedText(psychToolBoxConfig.w,'The end', 'center', 'center', psychToolBoxConfig.white);
@@ -740,8 +773,6 @@ try
     % Clean up
     quitExperiment();
     
-    fprintf("Session duration: %.2f", GetSecs - tSessionStart)
-    
 catch ME
 
     % Notify error
@@ -758,7 +789,11 @@ catch ME
     
 end
 
-% %% Test script
+%% Test script
+
+thisBlockOptRewardData = calcMaxEarnedReward(trueOriVec_, ...
+        reportedOriVec_, reportedConfigVec_, rewardConfig);
+    
 % stimCfg = stimCfgsDebug{2, 2}; % generateStimuli(psychToolBoxConfig, 0.5, 5, 45);
 % env = stimCfg.envSpectral;
 % envV = env(:);
@@ -1011,15 +1046,42 @@ KbReleaseWait; % (Optional) Clear key buffer before continuing
 end
 
 %% End of bloc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                k screen
-function endOfBlockScreen(psychToolBoxConfig, rewardUSD)
+function endOfBlockScreen(psychToolBoxConfig, rewardUSD, thisBlockOptRewardData)
 
 timeoutSecs = 60;  % maximum wait time
 tStart = GetSecs;
 
+% TODO: before printing check overconfident or underconfident
 % Display end-of-block message
-DrawFormattedText(psychToolBoxConfig.w, ...
-    ['End of block. \n\nCurrent reward in USD: $',  num2str(rewardUSD, '%.2f'), '\n\n\n\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)'], ...
-    'center', 'center', 255);
+if thisBlockOptRewardData.optimalReward - thisBlockOptRewardData.reward > 2 % if the difference is geater than 2 USD
+
+    if thisBlockOptRewardData.flagUnderconfident
+        DrawFormattedText(psychToolBoxConfig.w, ...
+            ['End of block.', ...
+            '\n\nCurrent reward in USD: $',  num2str(rewardUSD, '%.2f'), ...
+            '\n\nYou were slightly conservative with your confidence report!', ...
+            'In this block, you earned $', num2str(thisBlockOptRewardData.reward, '%.2f'), ' . You could have earned $', num2str(thisBlockOptRewardData.optimalReward, '%.2f'), '.', ...
+            '\n\n\n\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)'], ...
+            'center', 'center', 255);
+    elseif thisBlockOptRewardData.flagOverconfident
+        DrawFormattedText(psychToolBoxConfig.w, ...
+            ['End of block.', ...
+            '\n\nCurrent reward in USD: $',  num2str(rewardUSD, '%.2f'), ...
+            '\n\nYou were a bit more confident with your reports!', ...
+            'In this block, you earned $', num2str(thisBlockOptRewardData.reward, '%.2f'), ' . You could have earned $', num2str(thisBlockOptRewardData.optimalReward, '%.2f'), '.', ...
+            '\n\n\n\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)'], ...
+            'center', 'center', 255);
+    else
+    end
+        
+else
+    DrawFormattedText(psychToolBoxConfig.w, ...
+        ['End of block.', ...
+        '\n\nCurrent reward in USD: $',  num2str(rewardUSD, '%.2f'), ...
+        '\n\n\n\n\nPress SPACE to continue...\n\n(Automatically continuing in 60 seconds)'], ...
+        'center', 'center', 255);
+end
+
 Screen('Flip', psychToolBoxConfig.w);
 
 while true
@@ -1562,38 +1624,61 @@ function reward = calcReward(trueOri, reportedOri, confReport, rewardConfig)
 % Note: reported orientation is already pi-periodic, true orientation as
 % well
 maxTolerableError = rewardConfig.maxTolerableError; % 25; % In degrees
-absPerceptualError = abs(trueOri - reportedOri);
+absPerceptualError = abs(reportedOri - trueOri);
 absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
 
 % y1 = 12 + (14 - 12)*abs(sind(2*trueOri)); %12; fprintf("%.2f, %.2f \n", trueOri, y1);
 % x1 = 11 + (13 - 11)*abs(sind(2*trueOri));
-y1 = 15; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
-x1 = 13;
-c1 = 0.2; % Set to 0.1 if the limit is 100 USD %0.5; % 0.2
-m1 = - c1/y1;
-m2 = ( m1*x1 + c1 ) / ( x1 - maxTolerableError );
-c2 = -  m2*maxTolerableError;
+y1 = rewardConfig.y1; %15; %12; fprintf("%.2f, %.2f \n", trueOri, y1);
+x1 = rewardConfig.x1; %14
+c1 = rewardConfig.c1; %0.2 % Set to 0.1 if the limit is 100 USD %0.5; % 0.2
+m1 = - c1./y1;
+m2 = ( m1.*x1 + c1 ) ./ ( x1 - maxTolerableError );
+c2 = -  m2.*maxTolerableError;
 
-if absPerceptualError > maxTolerableError
-    if confReport == 1
-        reward = -c1; %-1.6*c1;
-    else
-        reward = 0;
-    end
-    return
-end
-
-if confReport == 1 % High confidence
-    gHC = m1 * absPerceptualError + c1;
-    if absPerceptualError > y1
-        gHC = 0.5*gHC;
-    end
-    reward = gHC;
-elseif confReport == 0  % Low confidence
-    gLC = m2 * absPerceptualError + c2;
-    reward = gLC;
+if numel(confReport) > 1 % it is a vector and not a single value
+    % High confidence
+    gHC = m1 .* absPerceptualError + c1;
+    reward(:) = gHC;
+    idx = (absPerceptualError <= y1) & (confReport == 1);
+    reward(idx) = gHC(idx);
+    idx = (absPerceptualError > y1) & (confReport == 1);
+    reward(idx) = rewardConfig.g1*gHC(idx);
+    
+    % Low confidence
+    gLC = m2 .* absPerceptualError + c2;
+    reward(confReport == 0) = gLC(confReport == 0);
+    
+    % Greater than max tolerance
+    idx = (absPerceptualError > maxTolerableError) & (confReport == 1);
+    reward(idx) = -rewardConfig.g2*c1;
+    
+    idx = (absPerceptualError > maxTolerableError) & (confReport == 0);
+    reward(idx) = 0;
 else
-    error('Unknown confidence report: %s. Must be "HC" or "LC".', confReport);
+    
+    if absPerceptualError > maxTolerableError
+        if confReport == 1
+            reward = -rewardConfig.g2*c1; %-1.6*c1;
+        else
+            reward = 0;
+        end
+        return
+    end
+
+    if confReport == 1 % High confidence
+        gHC = m1 .* absPerceptualError + c1;
+        if absPerceptualError > y1
+            gHC = rewardConfig.g1*gHC;
+        end
+        reward = gHC;
+    elseif confReport == 0  % Low confidence
+        gLC = m2 .* absPerceptualError + c2;
+        reward = gLC;
+    else
+        error('Unknown confidence report: %s. Must be "HC" or "LC".', confReport);
+    end
+
 end
 
 end
@@ -1602,6 +1687,53 @@ function points = convertRewardValToPoints(rewardVal)
 
 % 1000 points = 1 USD
 points = ceil(1000*rewardVal / 10) * 10;
+
+end
+
+function val = convertPointsToUSD(points)
+val = points / 1000;
+end
+
+function retData = calcMaxEarnedReward(trueOri, reportedOri, confReport, rewardConfig)
+
+absPerceptualError = abs(reportedOri - trueOri);
+absPerceptualError = min(absPerceptualError, 180 - absPerceptualError);
+
+optimalConfReport = zeros(size(absPerceptualError));
+
+optimalConfReport( absPerceptualError >= rewardConfig.x1 ) = 0; % HC
+optimalConfReport( absPerceptualError < rewardConfig.x1 )  = 1; % LC
+
+% Reward based on optimal confidence choices
+optRewardVec    = calcReward(trueOri, reportedOri, optimalConfReport, rewardConfig);
+optPointsVec    = convertRewardValToPoints(optRewardVec);
+optimalPoints   = sum(optPointsVec);
+optimalReward   = convertPointsToUSD(optimalPoints);
+optHCLCRatio    = sum(optimalConfReport == 1) / sum(optimalConfReport == 0);
+
+% Reward based on actual data
+rewardVec  = calcReward(trueOri, reportedOri, confReport, rewardConfig);
+pointsVec  = convertRewardValToPoints(rewardVec);
+points     = sum(pointsVec);
+reward     = convertPointsToUSD(points);
+HCLCRatio  = sum(confReport == 1) / sum(confReport == 0);
+
+% Overconfident
+if ( ( HCLCRatio - optHCLCRatio )/optHCLCRatio ) > 0.1 % Greater than 10% range
+    flagOverconfident  = true;
+    flagUnderconfident = false;
+elseif  ( ( HCLCRatio - optHCLCRatio )/optHCLCRatio ) < 0.1 
+    flagOverconfident  = false;
+    flagUnderconfident = true;
+else
+    flagOverconfident  = false;
+    flagUnderconfident = false;
+end
+         
+retData.optimalReward      = optimalReward; % Maximum reward that the subject could have earned
+retData.reward             = reward;        % Reward that the subject earned
+retData.flagOverconfident  = flagOverconfident;
+retData.flagUnderconfident = flagUnderconfident;
 
 end
 
