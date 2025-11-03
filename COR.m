@@ -102,18 +102,18 @@ end
 % Contrast 0.018, duration 0.06, loc 4.5, spread 45 
 interTrlInterval = 1;                                                      % Inter trial interval in seconds
 fixationDur = 0.5;                                                         % Fixation duration in seconds
-stimOrientations = [15]; %0:15:179; %linspace(0, 179, 10);                                   % 
+stimOrientations = 0:15:179; %linspace(0, 179, 10);                                   % 
 stimLoc_x = 0;                                                             % Stimulus location in visual field degrees
-stimLoc_y = 5;                                                           % Stimulus location in visual field degrees
-stimDur = [0.05, 0.3];  %0.05 0.15 0.5. 0.15 is  the minimum                     % Stimulus duration in seconds
-stimSpread = [5, 25]; % 5, 25, 45                                               % Stimulus spread in degrees
+stimLoc_y = 5;                                                             % Stimulus location in visual field degrees
+stimDur = [0.05, 0.3];  %0.05 0.15 0.5. 0.15 is  the minimum               % Stimulus duration in seconds
+stimSpread = [5, 25]; % 5, 25, 45                                          % Stimulus spread in degrees
 % stimContrast = [0.015, 0.05];                                            % Stimulus contrast levels
-stimContrast = [0.015, 0.05]; % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
+stimContrast = [0.015, 0.05];                                               % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 1; %6;                                                           % Number of blocks 
+numBlocks   = 1; %6;                                                       % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
-% nTrialsPerBlock = numel(stimOrientations)*8;    % TODO: delete
+% nTrialsPerBlock = numel(stimOrientations)*8;                             % TODO: delete
 nTrialsPerBlock = numel(stimOrientations)*6;
 
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
@@ -319,8 +319,12 @@ try
     % Initialize Psychtoolbox
     psychToolBoxConfig = initPsychToolBox();   
     
+    %% Train block goes here
+    % showTrainBlock(trlBlockData, psychToolBoxConfig, rewardConfig) -
+    % Maybe showing feedback is not such a good idea.
+    
+    
     %% Main experiment block goes here
-
     % Show trial and instruction before the experiment starts
     % Spectral env should be generated before
     % Before the experiment block starts - do following
@@ -494,10 +498,9 @@ try
             fixnData = showFixation(psychToolBoxConfig, fixationWinCfg);
             
             % Wait indefinately untill subject maintains fixation
-            [fixationHeld, eyeUsed] = checkFixation(psychToolBoxConfig, eyeUsed, fixationWinCfg.fixThreshold, ...
+            [fixationHeld, eyeUsed] = checkFixation(eyeUsed, fixationWinCfg.fixThreshold, ...
                 fixnData.tStart, trlCfg.fixationDur, ...
-                psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, psychToolBoxConfig.quitKey, ...
-                checkFixationMaxDur);
+                psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, psychToolBoxConfig.quitKey);
             
             % === Stimulus Phase ===
             fixationHeld = true;
@@ -789,11 +792,7 @@ catch ME
     
 end
 
-%% Test script
-
-thisBlockOptRewardData = calcMaxEarnedReward(trueOriVec_, ...
-        reportedOriVec_, reportedConfigVec_, rewardConfig);
-    
+%% Test script    
 % stimCfg = stimCfgsDebug{2, 2}; % generateStimuli(psychToolBoxConfig, 0.5, 5, 45);
 % env = stimCfg.envSpectral;
 % envV = env(:);
@@ -840,15 +839,18 @@ thisBlockOptRewardData = calcMaxEarnedReward(trueOriVec_, ...
 %% ----------------------------- FUNCTION ----------------------------- %%
 
 %% Show trial block
-function showTrainBlock(trlBlockData)
+function showTrainBlock(trlBlockData, psychToolBoxConfig, rewardConfig)
 
-% Initialize Psychtoolbox
-psychToolBoxConfig = initPsychToolBox();   
+respSuccessWaitDur = 0.5;
+durFeedback = 1;
+beeperDur = 0.05;
+durFeedbackFixBreak = .5;
+respScreenGazeHoldDur = 0.2; 
 
 % --- ASK USER WHETHER TO RUN BLOCK ---
 DrawFormattedText(psychToolBoxConfig.w, ...
-    'Do you want to run this trial block?\n\nPress Y for YES, N for NO.', ...
-    'center', 'center', psychToolBoxConfig.white);
+    'Hi! \n\nBefore starting, do you want to run a train block to get familiar with the experiment?\n\nPress Y for YES, N for NO.', ...
+    'center', 'center', 0);
 Screen('Flip', psychToolBoxConfig.w);
 
 % Wait for a key press
@@ -885,13 +887,13 @@ if runBlock
     Eyelink('Message','TRIAL BLOCK START');
     
     nTrialInTrialBlock = numel( trlBlockData{:, 1} );
-    currCursor = 1;
+    currTrlCursor = 1;
     nCompletedTrialsCurrBlock = 0;
     tEndPrevTrl = GetSecs;
     
     while nCompletedTrialsCurrBlock < nTrialInTrialBlock
     
-        trlCfgIdx = currCursor;
+        trlCfgIdx = currTrlCursor;
         trlCfg = trlBlockData(trlCfgIdx, :);
         
         stimCfg = generateStimuli(psychToolBoxConfig, trlCfg.stimDur, trlCfg.stimSpread, oriRefStim);      
@@ -903,10 +905,9 @@ if runBlock
         fixnData = showFixation(psychToolBoxConfig, fixationWinCfg);
     
         % Wait indefinately untill subject maintains fixation
-        [fixationHeld, eyeUsed] = checkFixation(psychToolBoxConfig, eyeUsed, fixationWinCfg.fixThreshold, ...
+        [~, eyeUsed] = checkFixation(eyeUsed, fixationWinCfg.fixThreshold, ...
             fixnData.tStart, trlCfg.fixationDur, ...
-            psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, psychToolBoxConfig.quitKey, ...
-            checkFixationMaxDur);
+            psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter, psychToolBoxConfig.quitKey );
                 
         % === Stimulus Phase ===
         fixationHeld = true;
@@ -966,18 +967,15 @@ if runBlock
             [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w);
             continue;
         end
-    
-        % This trial was a success. Give reward, show feedback
-        % sampleTrueOri = trlCfg.stimOri;
+        
+        stimOri       = trlCfg.stimOri;
         reportedOri   = respData.reportedAngle;
         confReport    = respData.reportedConf;
-        
+           
         % Calculate reward
-        reward = calcReward(trlCfg.stimOri, reportedOri, confReport);
-        currentTotalReward = currentTotalReward + reward;
-        
+        reward = calcReward(trlCfg.stimOri, reportedOri, confReport, rewardConfig);
         rewardPoints = convertRewardValToPoints(reward);
-        
+            
         % Show beeper and wait for the response screen
         if rewardPoints >= 0
             Beeper(800, .4, beeperDur);
@@ -992,17 +990,12 @@ if runBlock
         % WaitSecs(respSuccessWaitDur - beeperDur);
         WaitSecs(respSuccessWaitDur);
     
-        % Show reward screen
-        if rewardPoints < 0
-            DrawFormattedText(psychToolBoxConfig.w,['' num2str(rewardPoints,'%d')],'center', ...
-                psychToolBoxConfig.yCenter - 30,[255 0 0]);
-        else
-            DrawFormattedText(psychToolBoxConfig.w,['+' num2str(rewardPoints,'%d')],'center', ...
-                    psychToolBoxConfig.yCenter - 30,[0 50 0]);
-        end
-        
         Screen('Flip', psychToolBoxConfig.w);
-        Eyelink('Message','FEEDBACK');
+        WaitSecs(0.5);
+        
+        % Show feedback screen
+        showTrainTrialFeedbackScreen(psychToolBoxConfig, fixationWinCfg, stimOri, reportedOri, confReport, rewardPoints);
+        
         WaitSecs(durFeedback);
         
         % Start timer for inter-trial interval
@@ -1012,6 +1005,8 @@ if runBlock
         currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
     end
 
+    Eyelink('Message','TRIAL BLOCK END');
+    
 end
 
 end
@@ -1021,8 +1016,8 @@ function beginExpScreen(psychToolBoxConfig)
 
 % Before starting the experiment wait for user to press space key
 % to begin the experiment.
-DrawFormattedText(psychToolBoxConfig.w, 'Press SPACE whenever you are ready to begin experiment...', ...
-    'center', 'center', 255);
+DrawFormattedText(psychToolBoxConfig.w, 'Press SPACE whenever you are ready to begin...', ...
+    'center', 'center', 0);
 Screen('Flip', psychToolBoxConfig.w);
 
 % Wait for keypress
@@ -1227,13 +1222,9 @@ KbName('UnifyKeyNames');
 calibrateKey = KbName('c');
 spaceKey = KbName('space');
 quitKey = KbName('q');
-zKey = KbName('z');
-xKey = KbName('x');
-periodKey = KbName('.>');
-slashKey = KbName('/?');
-leftArrowKey = KbName('LeftArrow');
-rightArrowKey = KbName('RightArrow');
-RestrictKeysForKbCheck([spaceKey quitKey zKey xKey periodKey slashKey leftArrowKey rightArrowKey calibrateKey]);
+yKey = KbName('y');
+nKey = KbName('n');
+RestrictKeysForKbCheck([yKey nKey spaceKey quitKey calibrateKey]);
 
 % Provide against interference
 HideCursor;
@@ -1408,7 +1399,7 @@ stimMetrics.stdAngle = stdAngle;
 end
 
 %% Check fixation 
-function [fixationHeld, eyeUsed] = checkFixation(psychToolBoxConfig, eyeUsedCurr, fixThreshold, tStart, durFix, xCenter, yCenter, quitKey, checkFixationMaxDur)
+function [fixationHeld, eyeUsed] = checkFixation(eyeUsedCurr, fixThreshold, tStart, durFix, xCenter, yCenter, quitKey)
 fixationHeld = true;
 tStartCheckFixation = tStart;
 eyeUsed = eyeUsedCurr;
@@ -1464,16 +1455,8 @@ end
 %% Show response screen
 function respData = showResponseScreen(psychToolBoxConfig, fixationWinCfg, trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur)
 
-arcRadi1 = 5; %5,5 - 5.4
-arcRadi2 = 6.2;   %3.5 - 4.2
-
-% if rand > 0.5
-%     arcRadi1 = 3.5;
-%     arcRadi2 = 5.5;
-% else
-%     arcRadi1 = 5.5;
-%     arcRadi2 = 3.5;
-% end
+arcRadi1 = 5;
+arcRadi2 = 6.2; 
 
 % Two arcs
 redRGBLevel = 255;
@@ -1485,7 +1468,6 @@ arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to matc
 % Initialize
 responseGiven = false;
 fixStartTime = NaN;
-sampleDuration = 0.01;
 reportedAngle = NaN;
 reportedArc = NaN;
 responseTime = NaN;
@@ -1499,8 +1481,6 @@ arcRectRed = CenterRectOnPointd([-1 -1 1 1] * arcRadiusRed, psychToolBoxConfig.x
 arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
 Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -180, 4);   % red arc
 Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -180, 4); % green arc
-% Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -90, 4);   % red arc
-% Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -90, 4); % green arc
 [~, tStartOfRespScreen] = Screen('Flip', psychToolBoxConfig.w);
 
     
@@ -1578,8 +1558,6 @@ while ~responseGiven
     arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
     Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -180, 4);   % red arc
     Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -180, 4); % green arc
-%     Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -90, 4);   % red arc
-%     Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -90, 4); % green arc
     
     if responseGiven
         % One response is given, draw the cursor on the arc and
@@ -1591,15 +1569,6 @@ while ~responseGiven
     
     Screen('Flip', psychToolBoxConfig.w);
     
-%     if responseGiven
-%         Beeper(200, .4, beeperDur);
-% %         for i=1:3
-% %             Beeper(20, .4, 0.01);
-% %             Beeper(30, .4, 0.01);
-% %         end
-%     end
-    
-%     WaitSecs(sampleDuration);
 end
 
 confReport = NaN;
@@ -1625,6 +1594,60 @@ respData.reactionTime  = responseTime - tStartOfRespScreen;
 
 end
 
+%% Show feedback screen for train block
+function showTrainTrialFeedbackScreen(psychToolBoxConfig, fixationWinCfg, stimOri, reportedOri, confReport, rewardPoints)
+
+arcRadi1 = 5; 
+arcRadi2 = 6.2;
+
+% Two arcs
+redRGBLevel    = 255;
+greenRGBLevel  = 50;
+arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
+arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
+
+% Draw response arc
+Screen('FillOval', psychToolBoxConfig.w, fixationWinCfg.fixColor, fixationWinCfg.fixRect);
+arcRectRed   = CenterRectOnPointd([-1 -1 1 1] * arcRadiusRed, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
+arcRectGreen = CenterRectOnPointd([-1 -1 1 1] * arcRadiusGreen, psychToolBoxConfig.xCenter, psychToolBoxConfig.yCenter);
+Screen('FrameArc', psychToolBoxConfig.w, [redRGBLevel 0 0], arcRectRed, 90, -180, 4);   % red arc
+Screen('FrameArc', psychToolBoxConfig.w, [0 greenRGBLevel 0], arcRectGreen, 90, -180, 4); % green arc
+
+% Draw response and actual stimuli
+if confReport == 0
+    selectedRadius = arcRadiusRed;
+else
+    selectedRadius = arcRadiusGreen;
+end
+
+dotX = psychToolBoxConfig.xCenter + selectedRadius * cosd(reportedOri);
+dotY = psychToolBoxConfig.yCenter - selectedRadius * sind(reportedOri);
+Screen('DrawDots', psychToolBoxConfig.w, [dotX; dotY], 20, [0 0 0], [], 2);
+
+xStart = psychToolBoxConfig.xCenter;
+yStart = psychToolBoxConfig.yCenter;
+xEnd   = psychToolBoxConfig.xCenter + selectedRadius * cosd(stimOri);
+yEnd   = psychToolBoxConfig.yCenter - selectedRadius * sind(stimOri);
+
+disp(xEnd)
+disp(yEnd)
+disp(xStart)
+disp(yStart)
+
+Screen('DrawLines', psychToolBoxConfig.w, [xStart xEnd; yStart yEnd], 1, 0, [], 1);
+        
+% Show reward screen
+if rewardPoints <= 0
+    DrawFormattedText(psychToolBoxConfig.w,['\n\n\n\n-' num2str(abs(rewardPoints),'%d')],'center', ...
+        psychToolBoxConfig.yCenter - 30,[255 0 0]);
+else
+    DrawFormattedText(psychToolBoxConfig.w,['\n\n\n\n+' num2str(rewardPoints,'%d')],'center', ...
+            psychToolBoxConfig.yCenter - 30,[0 50 0]);
+end
+           
+[~, ~] = Screen('Flip', psychToolBoxConfig.w);
+
+end
 
 %% Calculate reward
 function reward = calcReward(trueOri, reportedOri, confReport, rewardConfig)
