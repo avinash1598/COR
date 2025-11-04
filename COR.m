@@ -111,7 +111,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                          % Sti
 stimContrast = [0.015, 0.05];                                               % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 1; %6;                                                       % Number of blocks 
+numBlocks   = 5; %6;                                                       % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 % nTrialsPerBlock = numel(stimOrientations)*8;                             % TODO: delete
 nTrialsPerBlock = numel(stimOrientations)*6;
@@ -206,7 +206,7 @@ rewardConfig.g2                = 0.3;
 %     0.3000    15.0000    0.0500
 %     0.0500   35.0000    0.0500
 %     0.3000   35.0000    0.0500
-% ];
+% ];  
 
 comboRepeated = repmat(combinations, length(stimOrientations), 1);  % Repeat the combinations for each orientation (10 times)
 orientationsRepeated = repelem(stimOrientations(:), size(combinations, 1));  % Repeat orientations to match combination matrix
@@ -1048,7 +1048,7 @@ tStart = GetSecs;
 
 % TODO: before printing check overconfident or underconfident
 % Display end-of-block message
-if thisBlockOptRewardData.optimalReward - thisBlockOptRewardData.reward > 2 % if the difference is geater than 2 USD
+if thisBlockOptRewardData.optimalReward - thisBlockOptRewardData.reward > 1.5 % if the difference is geater than 2 USD
 
     if thisBlockOptRewardData.flagUnderconfident
         DrawFormattedText(psychToolBoxConfig.w, ...
