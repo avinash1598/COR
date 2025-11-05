@@ -111,7 +111,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                          % Sti
 stimContrast = [0.015, 0.05];                                               % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 5; %6;                                                       % Number of blocks 
+numBlocks   = 6; %6;                                                       % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 % nTrialsPerBlock = numel(stimOrientations)*8;                             % TODO: delete
 nTrialsPerBlock = numel(stimOrientations)*6;
@@ -726,7 +726,7 @@ try
         fprintf("Completed trials %d/%d \n", nCompletedTrialsCurrBlock, nTrialsPerBlock);
         fprintf('Current total reward: $%.2f \n', currentTotalReward);
         fprintf('Percent Wrong (negative reward): %.2f \n', 100*sum(thisBlockData.trlError)/numel(thisBlockData.trlError)); % this should be less than 50%
-        fprintf('Aborted trials: %d/%d', sum(thisBlockData.trlAborted), numel(thisBlockData.trlAborted))
+        fprintf('Aborted trials: %d/%d', sum(thisBlockData.trlAborted, 'omitnan'), numel(thisBlockData.trlAborted))
         fprintf('\n\n')
         
         metaData.currentTotalReward         = currentTotalReward;
@@ -757,7 +757,7 @@ try
     fprintf("Completed trials %d/%d \n", sum(thisSessionData.trialStatus), numel(thisSessionData.trialStatus));
     fprintf('Total earned reward: $%.2f \n', currentTotalReward);
     fprintf('Percent Wrong (negative reward): %.2f\n', 100*sum(thisSessionData.trlError)/numel(thisSessionData.trlError)); % this should be less than 50%
-    fprintf('Aborted trials: %d/%d', sum(thisSessionData.trlAborted), numel(thisSessionData.trlAborted))
+    fprintf('Aborted trials: %d/%d', sum(thisSessionData.trlAborted, 'omitnan'), numel(thisSessionData.trlAborted))
     fprintf('\n\n')
     
     % Announce the end of the session
