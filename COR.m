@@ -177,26 +177,26 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 % ];
 
 % Tien - 6 Nov
-% combinations = [
-%     0.3000    10.0000    0.0200
-%     0.3000    10.0000    0.0800
-%     0.3000    35.0000    0.0800
-%     0.3000    35.0000    0.0200
-%     
-%     0.0800    10.0000    0.0200 % can go up to 20ms, 40ms
-%     0.0800    35.0000    0.0200
-% ];
-
-% Avinash - COR25
 combinations = [
-    0.1500    10.0000    0.0200
-    0.1500    10.0000    0.0800
-    0.1500    35.0000    0.0800
-    0.1500    35.0000    0.0200
+    0.3000    10.0000    0.0200
+    0.3000    10.0000    0.0800
+    0.3000    35.0000    0.0800
+    0.3000    35.0000    0.0200
     
-    0.0500    10.0000    0.0200 % can go up to 20ms, 40ms
-    0.0500    35.0000    0.0200
+    0.0800    10.0000    0.0200 % can go up to 20ms, 40ms
+    0.0800    35.0000    0.0200
 ];
+
+% % Avinash - COR25
+% combinations = [
+%     0.1500    10.0000    0.0200
+%     0.1500    10.0000    0.0800
+%     0.1500    35.0000    0.0800
+%     0.1500    35.0000    0.0200
+%     
+%     0.0500    10.0000    0.0200 % can go up to 20ms, 40ms
+%     0.0500    35.0000    0.0200
+% ];
 
 rewardConfig.maxTolerableError = 36;
 rewardConfig.y1                = 18;
@@ -1070,7 +1070,7 @@ tStart = GetSecs;
 
 % TODO: before printing check overconfident or underconfident
 % Display end-of-block message
-if thisBlockOptRewardData.optimalReward - thisBlockOptRewardData.reward > 1.5 % if the difference is geater than 2 USD
+if thisBlockOptRewardData.optimalReward - thisBlockOptRewardData.reward > 2 % if the difference is geater than 2 USD
 
     if thisBlockOptRewardData.flagUnderconfident
         DrawFormattedText(psychToolBoxConfig.w, ...
