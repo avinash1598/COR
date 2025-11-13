@@ -229,14 +229,7 @@ rewardConfig.c1                = 0.2;
 rewardConfig.g1                = 1.2; % 0.3
 rewardConfig.g2                = 1.5; % 0.3
 
-% Jiaming & Tien
-rewardConfig.maxTolerableError = 36; %36;
-% rewardConfig.y1                = 18; %18;
-% rewardConfig.x1                = 16.1; %16.1;
-% rewardConfig.c1                = 0.2;
-% rewardConfig.g1                = 0.3; % 0.3
-% rewardConfig.g2                = 0.3; % 0.3
-
+% 
 % Medium
 % combinations = [
 %     0.1500    5.0000    0.0250
