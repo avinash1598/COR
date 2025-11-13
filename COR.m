@@ -16,6 +16,7 @@
 
 %% Start clean
 close all;
+
 clearvars;
 
 % Random seed
@@ -230,7 +231,7 @@ rewardConfig.g1                = 1.2; % 0.3
 rewardConfig.g2                = 1.5; % 0.3
 
 % Jiaming & Tien
-rewardConfig.maxTolerableError = 36; %36;
+% rewardConfig.maxTolerableError = 36; %36;
 % rewardConfig.y1                = 18; %18;
 % rewardConfig.x1                = 16.1; %16.1;
 % rewardConfig.c1                = 0.2;
