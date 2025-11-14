@@ -224,8 +224,8 @@ combinations = [
 
 % Akash
 rewardConfig.maxTolerableError = 30; %36;
-rewardConfig.y1                = 14; %18;
-rewardConfig.x1                = 13; %16.1;
+rewardConfig.y1                = 15; %18;
+rewardConfig.x1                = 14; %16.1;
 rewardConfig.c1                = 0.2;
 rewardConfig.g1                = 1.2; % 0.3
 rewardConfig.g2                = 1.5; % 0.3
