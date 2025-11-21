@@ -188,27 +188,27 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 %     0.0800    35.0000    0.0200
 % ];
 
-% Jiaming - 10 Nov
-combinations = [
-    0.3000    10.0000    0.0200
-    0.3000    10.0000    0.0800
-    0.3000    30.0000    0.0800
-    0.3000    30.0000    0.0200
-    
-    0.0800    10.0000    0.0200 % can go up to 20ms, 40ms
-    0.0800    30.0000    0.0200
-];
-
-% % Akash 
+% % Jiaming - 10 Nov
 % combinations = [
-%     0.3000    10.0000    0.0180
-%     0.3000    10.0000    0.0300
-%     0.3000    35.0000    0.0300
-%     0.3000    35.0000    0.0180
+%     0.3000    10.0000    0.0200
+%     0.3000    10.0000    0.0800
+%     0.3000    30.0000    0.0800
+%     0.3000    30.0000    0.0200
 %     
-%     0.0800    10.0000    0.0180 % can go up to 20ms, 40ms
-%     0.0800    35.0000    0.0180
+%     0.0800    10.0000    0.0200 % can go up to 20ms, 40ms
+%     0.0800    30.0000    0.0200
 % ];
+
+% Akash 
+combinations = [
+    0.3000    10.0000    0.0180
+    0.3000    10.0000    0.0300
+    0.3000    35.0000    0.0300
+    0.3000    35.0000    0.0180
+    
+    0.0800    10.0000    0.0180 % can go up to 20ms, 40ms
+    0.0800    35.0000    0.0180
+];
 
 
 % % Avinash - COR25
@@ -222,21 +222,21 @@ combinations = [
 %     0.0500    35.0000    0.0200
 % ];
 
-% % Akash
-% rewardConfig.maxTolerableError = 30; %36;
-% rewardConfig.y1                = 15; %18;
-% rewardConfig.x1                = 14; %16.1;
-% rewardConfig.c1                = 0.2;
-% rewardConfig.g1                = 1.2; % 0.3
-% rewardConfig.g2                = 1.5; % 0.3
-
-% Jiaming & Tien
-rewardConfig.maxTolerableError = 36; %36;
-rewardConfig.y1                = 18; %18;
-rewardConfig.x1                = 16.1; %16.1;
+% Akash
+rewardConfig.maxTolerableError = 30; %36;
+rewardConfig.y1                = 15; %18;
+rewardConfig.x1                = 14; %16.1;
 rewardConfig.c1                = 0.2;
-rewardConfig.g1                = 0.3; % 0.3
-rewardConfig.g2                = 0.3; % 0.3
+rewardConfig.g1                = 1.2; % 0.3
+rewardConfig.g2                = 1.5; % 0.3
+
+% % Jiaming & Tien
+% rewardConfig.maxTolerableError = 36; %36;
+% rewardConfig.y1                = 18; %18;
+% rewardConfig.x1                = 16.1; %16.1;
+% rewardConfig.c1                = 0.2;
+% rewardConfig.g1                = 0.3; % 0.3
+% rewardConfig.g2                = 0.3; % 0.3
 
 % Medium
 % combinations = [
