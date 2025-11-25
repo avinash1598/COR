@@ -177,16 +177,16 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 %     0.0500    40.0000    0.0800
 % ];
 
-% % Tien - 6 Nov
-% combinations = [
-%     0.3000    10.0000    0.0200
-%     0.3000    10.0000    0.0800
-%     0.3000    35.0000    0.0800
-%     0.3000    35.0000    0.0200
-%     
-%     0.0800    10.0000    0.0200 % can go up to 20ms, 40ms
-%     0.0800    35.0000    0.0200
-% ];
+% Tien - 6 Nov
+combinations = [
+    0.3000    10.0000    0.0200
+    0.3000    10.0000    0.0800
+    0.3000    35.0000    0.0800
+    0.3000    35.0000    0.0200
+    
+    0.0800    10.0000    0.0200 % can go up to 20ms, 40ms
+    0.0800    35.0000    0.0200
+];
 
 % % Jiaming - 10 Nov
 % combinations = [
@@ -199,44 +199,44 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 %     0.0800    30.0000    0.0200
 % ];
 
-% Akash 
-combinations = [
-    0.3000    10.0000    0.0180
-    0.3000    10.0000    0.0300
-    0.3000    35.0000    0.0300
-    0.3000    35.0000    0.0180
-    
-    0.0800    10.0000    0.0180 % can go up to 20ms, 40ms
-    0.0800    35.0000    0.0180
-];
+% % Akash 
+% combinations = [
+%     0.3000    10.0000    0.0180
+%     0.3000    10.0000    0.0300
+%     0.3000    35.0000    0.0300
+%     0.3000    35.0000    0.0180
+%     
+%     0.0800    10.0000    0.0180 % can go up to 20ms, 40ms
+%     0.0800    35.0000    0.0180
+% ];
 
 
 % % Avinash - COR25
 % combinations = [
-%     0.1500    10.0000    0.0200
-%     0.1500    10.0000    0.0800
-%     0.1500    35.0000    0.0800
-%     0.1500    35.0000    0.0200
+%     0.3000    10.0000    0.0200
+%     0.3000    10.0000    0.0800
+%     0.3000    30.0000    0.0800
+%     0.3000    30.0000    0.0200
 %     
-%     0.0500    10.0000    0.0200 % can go up to 20ms, 40ms
-%     0.0500    35.0000    0.0200
+%     0.1000    10.0000    0.0200 % can go up to 20ms, 40ms
+%     0.1000    30.0000    0.0200
 % ];
 
-% Akash
-rewardConfig.maxTolerableError = 30; %36;
-rewardConfig.y1                = 15; %18;
-rewardConfig.x1                = 14; %16.1;
-rewardConfig.c1                = 0.2;
-rewardConfig.g1                = 1.2; % 0.3
-rewardConfig.g2                = 1.5; % 0.3
-
-% % Jiaming & Tien
-% rewardConfig.maxTolerableError = 36; %36;
-% rewardConfig.y1                = 18; %18;
-% rewardConfig.x1                = 16.1; %16.1;
+% % Akash
+% rewardConfig.maxTolerableError = 30; %36;
+% rewardConfig.y1                = 15; %18;
+% rewardConfig.x1                = 14; %16.1;
 % rewardConfig.c1                = 0.2;
-% rewardConfig.g1                = 0.3; % 0.3
-% rewardConfig.g2                = 0.3; % 0.3
+% rewardConfig.g1                = 1.2; % 0.3
+% rewardConfig.g2                = 1.5; % 0.3
+
+% Jiaming & Tien
+rewardConfig.maxTolerableError = 36; %36;
+rewardConfig.y1                = 18; %18;
+rewardConfig.x1                = 16.1; %16.1;
+rewardConfig.c1                = 0.2;
+rewardConfig.g1                = 0.3; % 0.3
+rewardConfig.g2                = 0.3; % 0.3
 
 % Medium
 % combinations = [
@@ -351,7 +351,7 @@ end
 trlBlockData = dat(randperm(numel(dat(:, {'subject'})), 10), :);
 
 %% Reward
-baselineReward = 10; % If done over multiple session, then this should probably be reloaded from the previous session
+baselineReward           = 0; % If done over multiple session, then this should probably be reloaded from the previous session
 currentTotalReward       = 0; % This will not be baseline if a session file for this subject already exist
 currentTotalRewardPoints = 0; %convertRewardValToPoints(baselineReward);
 
@@ -728,16 +728,16 @@ try
             currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
             
             % Print End of trial stats
-            fprintf("%d \t %d \t %.2f \t\t %.4f \t\t %.2f \t\t %.4f \t\t %.2f \t\t %d \t\t %.2f \t\t %d", ...
+            fprintf("%02d \t %03d \t %06.2f \t %.4f \t %04.2f \t\t %05.4f \t %06.2f \t\t %1d \t %06.2f \t %1d", ...
                 dat(trlCfgIdx, colsToPrint).block, ...
                 dat(trlCfgIdx, colsToPrint).trial, ...
-                dat(trlCfgIdx, colsToPrint).stimOri, ...
-                dat(trlCfgIdx, colsToPrint).stimDur, ...
-                dat(trlCfgIdx, colsToPrint).stimSpread, ...
-                dat(trlCfgIdx, colsToPrint).stimContrast, ...
-                dat(trlCfgIdx, colsToPrint).reportedOri, ...
+                round( dat(trlCfgIdx, colsToPrint).stimOri, 2), ...
+                round( dat(trlCfgIdx, colsToPrint).stimDur, 4), ...
+                round( dat(trlCfgIdx, colsToPrint).stimSpread, 2), ...
+                round( dat(trlCfgIdx, colsToPrint).stimContrast, 4), ...
+                round( dat(trlCfgIdx, colsToPrint).reportedOri, 2), ...
                 dat(trlCfgIdx, colsToPrint).reportedConf, ...
-                dat(trlCfgIdx, colsToPrint).rawOriError, ...
+                round( dat(trlCfgIdx, colsToPrint).rawOriError, 2), ...
                 dat(trlCfgIdx, colsToPrint).trlError);
             fprintf("\n")
         
