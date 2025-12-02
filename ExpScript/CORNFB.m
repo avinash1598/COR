@@ -33,11 +33,16 @@ if sum(isnan(answer))
     error('Invalid input.')
 end
 subjectNum = answer(1);
-sessionNum = 1;          % Default value of session number
-newSession = true;
+% sessionNum = 1;          % Default value of session number
+% newSession = true;
 
 % Name the .mat file
 matFile = ['CORNFB' num2str(subjectNum,'%.2d') '.mat'];
+% Mat file for train block
+tMatFile = ['CORNFB' num2str(subjectNum,'%.2d') '_train.mat'];
+
+% dataFilePath = '/Users/gorislab/Desktop/psychophysics/experiments/COR/Data';
+% addpath(dataFilePath)
 
 % 1. If file exist 
 %   - Get last run session i.e. 2 
@@ -112,10 +117,10 @@ stimSpread = [5, 25]; % 5, 25, 45                                          % Sti
 stimContrast = [0.015, 0.05];                                               % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 6; %6;                                                       % Number of blocks 
+numBlocks   = 7; %6;                                                       % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 % nTrialsPerBlock = numel(stimOrientations)*8;                             % TODO: delete
-nTrialsPerBlock = numel(stimOrientations)*1;
+nTrialsPerBlock = numel(stimOrientations)*6;
 
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
@@ -140,7 +145,7 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 
 % Factorial design for stimulus
 [d, s, c] = ndgrid(stimDur, stimSpread, stimContrast);
-combinations = [d(:), s(:), c(:)];  % 8x3
+% combinations = [d(:), s(:), c(:)];  % 8x3
 
 % combinations = [combinations(2, :); combinations(4:end, :)]; %TODO: delete
 % combinations = [
@@ -153,19 +158,76 @@ combinations = [d(:), s(:), c(:)];  % 8x3
 %     0.1000    30.0000    0.0200
 % ];
 
+% combinations = [
+%     % 0.0800    20.0000    0.0220
+%     % 0.0800    30.0000    0.0250
+%     % 0.3000    20.0000    0.0500  %%%%% Easiest
+%     % 0.3000    35.0000    0.0500
+%     0.0800    35.0000    0.0250    %%%%% Hardest
+% ];
+
+% combinations = [
+%     % 0.0800    20.0000    0.0220
+%     % 0.0800    30.0000    0.0250
+%     %0.3000    20.0000    0.0500  %%%%% Easiest
+%     %0.3000    30.0000    0.0800  %%%%% Easiest
+%     0.0800    30.0000    0.0220
+%     % 0.3000    35.0000    0.0500
+% %     0.0800    35.0000    0.0250    %%%%% Hardest
+% ];
+
 combinations = [
-    0.1000    10.0000    0.0250
-    % 0.1000    30.0000    0.0250
+    0.3000    10.0000     0.0600
+    0.3000    30.0000     0.0600
+    0.3000    10.0000     0.0220
+    0.3000    30.0000     0.0220
+    
+    0.0800    10.0000     0.0220
+    0.0800    30.0000     0.0220
 ];
 
-% Jiaming & Tien
-rewardConfig.maxTolerableError = 36; %36;
-rewardConfig.y1                = 18; %18;
-rewardConfig.x1                = 16.1; %16.1;
-rewardConfig.c1                = 0.2;
-rewardConfig.g1                = 0.3; % 0.3
-rewardConfig.g2                = 0.3; % 0.3
+%  % 0.0800    20.0000    0.0220
+%     % 0.0800    30.0000    0.0250
+%     %0.3000    20.0000    0.0500  %%%%% Easiest
+%     %0.3000    30.0000    0.0800  %%%%% Easiest
+%     0.0800    30.0000    0.0220
+%     % 0.3000    35.0000    0.0500
+% %     0.0800    35.0000    0.0250    %%%%% Hardest
 
+% Dur: 0.3, 0.08 spread: 30, contrast: 0.022
+% 
+
+% Dispersion
+% 0.3000    10.0000    0.0800
+% 0.3000    30.0000    0.0800
+% 0.3000    45.0000    0.0800
+
+% Contrast and time
+% 0.3000    10.0000    0.0250
+% 0.3000    30.0000    0.0250
+% 0.3000    45.0000    0.0250
+
+% Contrast and time
+% 0.0800    10.0000    0.0250
+% 0.0800    30.0000    0.0250
+% 0.0800    45.0000    0.0250
+
+% Workflow - find easiest and  hardest and then set rest of the parameters
+
+% % Jiaming & Tien
+% rewardConfig.maxTolerableError = 36; %36;
+% rewardConfig.y1                = 18; %18;
+% rewardConfig.x1                = 16.1; %16.1;
+% rewardConfig.c1                = 0.2;
+% rewardConfig.g1                = 0.3; % 0.3
+% rewardConfig.g2                = 0.3; % 0.3
+
+rewardConfig.maxTolerableError = 30; %36;
+rewardConfig.y1                = 18; %18;
+rewardConfig.x1                = 16; %16.1;
+rewardConfig.c1                = 0.15;
+rewardConfig.g1                = 1.2; % 0.3
+rewardConfig.g2                = 1.5; % 0.3
 
 comboRepeated = repmat(combinations, length(stimOrientations), 1);  % Repeat the combinations for each orientation (10 times)
 orientationsRepeated = repelem(stimOrientations(:), size(combinations, 1));  % Repeat orientations to match combination matrix
@@ -255,7 +317,7 @@ end
 trlBlockData = dat(randperm(numel(dat(:, {'subject'})), 30), :);
 
 %% Reward
-baselineReward = 10; % If done over multiple session, then this should probably be reloaded from the previous session
+baselineReward           = 0; % If done over multiple session, then this should probably be reloaded from the previous session
 currentTotalReward       = 0; % This will not be baseline if a session file for this subject already exist
 currentTotalRewardPoints = 0; %convertRewardValToPoints(baselineReward);
 
@@ -279,7 +341,7 @@ try
     psychToolBoxConfig = initPsychToolBox();   
     
     % Train block goes here
-    showTrainBlock(trlBlockData, psychToolBoxConfig)
+    showTrainBlock(trlBlockData, psychToolBoxConfig, tMatFile)
     % Maybe showing feedback is not such a good idea.
     
     
@@ -731,7 +793,7 @@ end
 %% ----------------------------- FUNCTION ----------------------------- %%
 
 %% Show trial block
-function showTrainBlock(trlBlockData, psychToolBoxConfig)
+function showTrainBlock(trlBlockData, psychToolBoxConfig, tMatFile)
 
 respSuccessWaitDur = 0.5;
 durFeedback = 1;
@@ -783,6 +845,11 @@ if runBlock
     nCompletedTrialsCurrBlock = 0;
     tEndPrevTrl = GetSecs;
     
+    % Print trial info at the end of each trial
+    colsToPrint = {'block', 'trial', 'stimOri', 'stimDur', 'stimSpread', 'stimContrast', 'reportedOri', 'reportedConf', 'rawOriError', 'trlError'};
+    fprintf("Block \t Trial \t stimOri \t stimDur \t stimSpread \t stimContrast \t reportedOri \t reportedConf \t rawOriError \t trlError")
+    fprintf("\n")
+    
     while nCompletedTrialsCurrBlock < nTrialInTrialBlock
     
         trlCfgIdx = currTrlCursor;
@@ -790,6 +857,7 @@ if runBlock
         
         stimCfg = generateStimuli(psychToolBoxConfig, trlCfg.stimDur, trlCfg.stimSpread, oriRefStim);      
         stimParam = drawStimuli(stimCfg, trlCfg, psychToolBoxConfig);
+        stimMetrics = calcStimMetrics(stimParam.movie);
         
         WaitSecs( trlCfg.ITI - ( GetSecs - tEndPrevTrl ) );
     
@@ -870,22 +938,90 @@ if runBlock
         WaitSecs(respSuccessWaitDur);
         
         Screen('Flip', psychToolBoxConfig.w);
-        WaitSecs(0.5);
         
+        % WaitSecs(0.5);
         % Show feedback screen
-        showTrainTrialFeedbackScreen(psychToolBoxConfig, fixationWinCfg, stimOri, reportedOri, confReport);
+        % showTrainTrialFeedbackScreen(psychToolBoxConfig, fixationWinCfg, stimOri, reportedOri, confReport);
         
-        WaitSecs(durFeedback);
+        % WaitSecs(durFeedback);
         
         % Start timer for inter-trial interval
         [~, tEndPrevTrl] = Screen('Flip', psychToolBoxConfig.w);     
         
+        rawError = reportedOri - trlCfg.stimOri;
+        rawOriError = mod(rawError + 90, 180) - 90;
+            
+        % Save info in file
+        trlBlockData.stimSampleMeanOri(trlCfgIdx)  = trlCfg.stimOri + (stimMetrics.meanAngle - oriRefStim);
+        trlBlockData.stimSampleSpread(trlCfgIdx)   = stimMetrics.stdAngle;
+        trlBlockData.reportedOri(trlCfgIdx)        = reportedOri;
+        trlBlockData.reportedConf(trlCfgIdx)       = confReport;
+        trlBlockData.reward(trlCfgIdx)             = nan;
+        trlBlockData.reactionTime(trlCfgIdx)       = respData.reactionTime;
+        trlBlockData.trialStatus(trlCfgIdx)        = 1; % This trial was completed
+        trlBlockData.rawOriError(trlCfgIdx)        = rawOriError;
+        trlBlockData.trlError(trlCfgIdx)           = nan; % Error if negative reward
+            
+        % Print End of trial stats
+        fprintf("%02d \t %03d \t %06.2f \t %.4f \t %04.2f \t\t %05.4f \t %06.2f \t\t %1d \t %06.2f \t %1d", ...
+            trlBlockData(trlCfgIdx, colsToPrint).block, ...
+            trlBlockData(trlCfgIdx, colsToPrint).trial, ...
+            round( trlBlockData(trlCfgIdx, colsToPrint).stimOri, 2), ...
+            round( trlBlockData(trlCfgIdx, colsToPrint).stimDur, 4), ...
+            round( trlBlockData(trlCfgIdx, colsToPrint).stimSpread, 2), ...
+            round( trlBlockData(trlCfgIdx, colsToPrint).stimContrast, 4), ...
+            round( trlBlockData(trlCfgIdx, colsToPrint).reportedOri, 2), ...
+            trlBlockData(trlCfgIdx, colsToPrint).reportedConf, ...
+            round( trlBlockData(trlCfgIdx, colsToPrint).rawOriError, 2), ...
+            trlBlockData(trlCfgIdx, colsToPrint).trlError);
+        fprintf("\n")
+            
         nCompletedTrialsCurrBlock = nCompletedTrialsCurrBlock + 1;
         currTrlCursor = currTrlCursor + 1; % Move to next to be completed trial
+        
     end
 
     Eyelink('Message','TRIAL BLOCK END');
     
+    % =====================================================================
+    % Print stats 
+    % =====================================================================
+    thisBlockData = trlBlockData;
+    summaryTable = groupsummary(thisBlockData, {'reportedConf'}, ...
+                        {@(x) sqrt(nanmean(x.^2)), 'mean', 'std', 'numel'}, 'rawOriError');
+                    
+    fprintf('\n\n')
+    disp(summaryTable)
+        
+    save(tMatFile,'trlBlockData');
+    
+    WaitSecs(0.5);
+    
+    % --- ASK USER TO CONTINUE TO MAIN EXP ---
+    DrawFormattedText(psychToolBoxConfig.w, ...
+        'You are now done with the training. \n\nPress SPACE to continue to the main experiment ...', ...
+        'center', 'center', 0);
+    Screen('Flip', psychToolBoxConfig.w);
+
+    % Wait for keypress
+    while true
+        [~,~,keyCode] = KbCheck(-1);
+        if keyCode(psychToolBoxConfig.quitKey)
+            quitExperiment();
+            return
+        end
+
+        [keyIsDown, ~, keyCode] = KbCheck;
+        if keyIsDown
+            if keyCode(psychToolBoxConfig.spaceKey)
+                break;  % exit loop if space is pressed
+            end
+        end
+    end
+
+    KbReleaseWait; % (Optional) Clear key buffer before continuing
+
+
 end
 
 end
@@ -1784,7 +1920,8 @@ elseif theta == 0 && B_theta == 0
 else
     angl = atan2(fy, fx); % Orientation of the stimuli depends upon x and y spatial frequency component
     env = exp(cos(2*(angl-theta))/(2*B_theta)^2);
-    env = env + max(env(:))*0.4; % Add small power to all orientations
+    env = env + max(env(:))*0.4;
+    % env = env + max(env(:))*0.4; % Add small power to all orientations
     % env = exp(-0.5*(angl-theta).^2/(2*B_theta)^2);
 end
 
