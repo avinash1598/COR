@@ -176,6 +176,7 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 % %     0.0800    35.0000    0.0250    %%%%% Hardest
 % ];
 
+% Yichao
 combinations = [
     0.3000    10.0000     0.0600
     0.3000    30.0000     0.0600
@@ -223,8 +224,8 @@ combinations = [
 % rewardConfig.g2                = 0.3; % 0.3
 
 rewardConfig.maxTolerableError = 30; %36;
-rewardConfig.y1                = 18; %18;
-rewardConfig.x1                = 16; %16.1;
+rewardConfig.y1                = 17; %18;
+rewardConfig.x1                = 15; %16;
 rewardConfig.c1                = 0.15;
 rewardConfig.g1                = 1.2; % 0.3
 rewardConfig.g2                = 1.5; % 0.3
