@@ -117,7 +117,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                          % Sti
 stimContrast = [0.015, 0.05];                                               % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 7; %6;                                                       % Number of blocks 
+numBlocks   = 5; %6;                                                       % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 % nTrialsPerBlock = numel(stimOrientations)*8;                             % TODO: delete
 nTrialsPerBlock = numel(stimOrientations)*6;
@@ -1472,14 +1472,16 @@ end
 function respData = showResponseScreen(psychToolBoxConfig, fixationWinCfg, trlCfg, eyeUsed, respScreenGazeHoldDur, beeperDur, respSuccessWaitDur)
 
 arcRadi1 = 5;
-arcRadi2 = 6.2; 
+% arcRadi2 = 6.2; 
+arcRadi2 = 6.8; 
 
 % Two arcs
 redRGBLevel = 255;
 greenRGBLevel = 50;
 arcRadiusRed   = arcRadi1* psychToolBoxConfig.ppd;
 arcRadiusGreen = arcRadi2 * psychToolBoxConfig.ppd;
-arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
+% arcTolerance   = 0.4 * psychToolBoxConfig.ppd; % +/- tolerance in pixels to match arc
+arcTolerance   = 0.6 * psychToolBoxConfig.ppd;
 
 % Initialize
 responseGiven = false;
@@ -1505,7 +1507,7 @@ while ~responseGiven
         evt = Eyelink('NewestFloatSample');
         gx = evt.gx(eyeUsed+1); % [left eye gaze x, right eye gaze x] +1 because this is matlab
         gy = evt.gy(eyeUsed+1);
-
+        
         % if sample.gx(1) ~= el.MISSING_DATA && sample.gy(1) ~= el.MISSING_DATA
         if ~isnan(gx) && ~isnan(gy)
 
