@@ -127,11 +127,11 @@ stimSpread = [5, 25]; % 5, 25, 45                                          % Sti
 stimContrast = [0.015, 0.05];                                               % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 4; %6;                                                       % Number of blocks 
+numBlocks   = 6; %6;                                                       % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 % nTrialsPerBlock = numel(stimOrientations)*8;                             % TODO: delete
 % nTrialsPerBlock = numel(stimOrientations)*2; % Train
-nTrialsPerBlock = numel(stimOrientations)*6; % Actual ep
+nTrialsPerBlock = numel(stimOrientations)*6; % Actual ep, 6 corresponds to no of conditions and not the block
 
 nTrials = numBlocks*nTrialsPerBlock;                                       % Total number of trials to run in this session
 durFeedback = 1;
@@ -187,16 +187,16 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 % %     0.0800    35.0000    0.0250    %%%%% Hardest
 % ];
 
-% % Yichao
-% combinations = [
-%     0.3000    10.0000     0.0600
-%     0.3000    30.0000     0.0600
-%     0.3000    10.0000     0.0220
-%     0.3000    30.0000     0.0220
-%     
-%     0.0800    10.0000     0.0220
-%     0.0800    30.0000     0.0220
-% ];
+% Yichao
+combinations = [
+    0.3000    10.0000     0.0600
+    0.3000    30.0000     0.0600
+    0.3000    10.0000     0.0220
+    0.3000    30.0000     0.0220
+    
+    0.0800    10.0000     0.0220
+    0.0800    30.0000     0.0220
+];
 
 % Jonathan
 % Dispersion 30 or 35?
@@ -207,15 +207,15 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 
 % 0.3000    30.0000     0.0600
 
-combinations = [
-    0.3000    10.0000     0.0600
-    0.3000    30.0000     0.0600
-    0.3000    10.0000     0.0220
-    0.3000    30.0000     0.0220
-    
-    0.0800    10.0000     0.0220
-    0.0800    30.0000     0.0220
-];
+% combinations = [
+%     0.3000    10.0000     0.0600
+%     0.3000    30.0000     0.0600
+%     0.3000    10.0000     0.0220
+%     0.3000    30.0000     0.0220
+%     
+%     0.0800    10.0000     0.0220
+%     0.0800    30.0000     0.0220
+% ];
 
 %  % 0.0800    20.0000    0.0220
 %     % 0.0800    30.0000    0.0250
@@ -265,7 +265,7 @@ fixationScreenConfig.fixationWinTolerance = 0.75; % Radius: Based on the mean er
 responseScreenConfig.responseArcTolerance = 1;    % Radius: Based on the mean err in degree obtained from calibration = diameter = 2*maxErr
 responseScreenConfig.arcRadius1           = 4.5;
 responseScreenConfig.arcRadius2           = 4.5 + 2*responseScreenConfig.responseArcTolerance + 0.3; % set this according to the calibrtion error
-responseScreenConfig.switchRespAcs        = true;
+responseScreenConfig.switchRespAcs        = false; %true
 
 comboRepeated = repmat(combinations, length(stimOrientations), 1);  % Repeat the combinations for each orientation (10 times)
 orientationsRepeated = repelem(stimOrientations(:), size(combinations, 1));  % Repeat orientations to match combination matrix
