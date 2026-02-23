@@ -188,15 +188,15 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 % ];
 
 % Yichao
-combinations = [
-    0.3000    10.0000     0.0600
-    0.3000    30.0000     0.0600
-    0.3000    10.0000     0.0220
-    0.3000    30.0000     0.0220
-    
-    0.0800    10.0000     0.0220
-    0.0800    30.0000     0.0220
-];
+% combinations = [
+%     0.3000    10.0000     0.0600
+%     0.3000    30.0000     0.0600
+%     0.3000    10.0000     0.0220
+%     0.3000    30.0000     0.0220
+%     
+%     0.0800    10.0000     0.0220
+%     0.0800    30.0000     0.0220
+% ];
 
 % Jonathan
 % Dispersion 30 or 35?
@@ -207,15 +207,15 @@ combinations = [
 
 % 0.3000    30.0000     0.0600
 
-% combinations = [
-%     0.3000    10.0000     0.0600
-%     0.3000    30.0000     0.0600
-%     0.3000    10.0000     0.0220
-%     0.3000    30.0000     0.0220
-%     
-%     0.0800    10.0000     0.0220
-%     0.0800    30.0000     0.0220
-% ];
+combinations = [
+    0.3000    10.0000     0.0600
+    0.3000    30.0000     0.0600
+    0.3000    10.0000     0.0220
+    0.3000    30.0000     0.0220
+    
+    0.0800    10.0000     0.0220
+    0.0800    30.0000     0.0220
+];
 
 %  % 0.0800    20.0000    0.0220
 %     % 0.0800    30.0000    0.0250
@@ -265,7 +265,7 @@ fixationScreenConfig.fixationWinTolerance = 0.75; % Radius: Based on the mean er
 responseScreenConfig.responseArcTolerance = 1;    % Radius: Based on the mean err in degree obtained from calibration = diameter = 2*maxErr
 responseScreenConfig.arcRadius1           = 4.5;
 responseScreenConfig.arcRadius2           = 4.5 + 2*responseScreenConfig.responseArcTolerance + 0.3; % set this according to the calibrtion error
-responseScreenConfig.switchRespAcs        = false; %true
+responseScreenConfig.switchRespAcs        = true; %true
 
 comboRepeated = repmat(combinations, length(stimOrientations), 1);  % Repeat the combinations for each orientation (10 times)
 orientationsRepeated = repelem(stimOrientations(:), size(combinations, 1));  % Repeat orientations to match combination matrix
