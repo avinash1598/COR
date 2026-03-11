@@ -127,7 +127,7 @@ stimSpread = [5, 25]; % 5, 25, 45                                          % Sti
 stimContrast = [0.015, 0.05];                                               % 0.022 - seems good contrast level to get 50:50 conf report (HC:Lc)
 respMaxDur = 5;                                                            % 0.010 Maximum allowed time for user to respond (2 seconds)
 respSuccessWaitDur = 0.5;
-numBlocks   = 7; %6;                                                       % Number of blocks 
+numBlocks   = 6; %6;                                                       % Number of blocks 
 % nTrialsPerBlock = numel(stimOrientations)*numel(stimSpread)*numel(stimContrast)*numel(stimDur);    % Assuming each trial takes max of 5 second, a block should take ~8 minutes
 % nTrialsPerBlock = numel(stimOrientations)*8;                             % TODO: delete
 % nTrialsPerBlock = numel(stimOrientations)*2; % Train
@@ -208,30 +208,30 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 % 0.3000    30.0000     0.0600
 
 
-% Jonathan
-combinations = [
-    0.3000    10.0000     0.0600
-    0.3000    30.0000     0.0600
-    0.3000    10.0000     0.0220
-    0.3000    30.0000     0.0220
-    
-    0.0800    10.0000     0.0220
-    0.0800    30.0000     0.0220
-];
-
-% % Reduce contrast (0.018) and increase duration (0.1200) - for the next
-% % subject
-% % David
-% % Stim value changed
+% % Jonathan
 % combinations = [
-%     0.3000    10.0000     0.0400
-%     0.3000    30.0000     0.0400
-%     0.3000    10.0000     0.0180
-%     0.3000    30.0000     0.0180
+%     0.3000    10.0000     0.0600
+%     0.3000    30.0000     0.0600
+%     0.3000    10.0000     0.0220
+%     0.3000    30.0000     0.0220
 %     
-%     0.1000    10.0000     0.0180
-%     0.1000    30.0000     0.0180
+%     0.0800    10.0000     0.0220
+%     0.0800    30.0000     0.0220
 % ];
+
+% Reduce contrast (0.018) and increase duration (0.1200) - for the next
+% subject
+% David
+% Stim value changed
+combinations = [
+    0.3000    10.0000     0.0400
+    0.3000    30.0000     0.0400
+    0.3000    10.0000     0.0180
+    0.3000    30.0000     0.0180
+    
+    0.1000    10.0000     0.0180
+    0.1000    30.0000     0.0180
+];
 
 
     
