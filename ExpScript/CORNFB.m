@@ -272,11 +272,19 @@ combinations = [
 % rewardConfig.g1                = 0.3; % 0.3
 % rewardConfig.g2                = 0.3; % 0.3
 
-rewardConfig.maxTolerableError = 30; %36;
-rewardConfig.y1                = 17; %18;
-rewardConfig.x1                = 15; %16;
+% rewardConfig.maxTolerableError = 30; %36;
+% rewardConfig.y1                = 17; %18;
+% rewardConfig.x1                = 16; %16;
+% rewardConfig.c1                = 0.15;
+% rewardConfig.g1                = 1.2; % 0.3 % HC
+% rewardConfig.g2                = 1.5; % 0.3 % LC
+
+% David
+rewardConfig.maxTolerableError = 25; %30; %36;
+rewardConfig.y1                = 13; %15 17; %18;
+rewardConfig.x1                = 11; %14 16;
 rewardConfig.c1                = 0.15;
-rewardConfig.g1                = 1; %1.2; % 0.3 % HC
+rewardConfig.g1                = 1.2; %1.2; % 0.3 % HC
 rewardConfig.g2                = 1.5; % 0.3 % LC
 
 % Values set accrding to the values obtained from calibration
