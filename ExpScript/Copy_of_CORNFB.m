@@ -234,25 +234,16 @@ trlStatusVec  = trlStatus*ones(nTrials, 1);
 %     0.1000    30.0000     0.0180
 % ];
 
-% combinations = [
-%     0.3000    10.0000     0.0400
-%     0.3000    10.0000     0.0400
-%     0.3000    10.0000     0.0400
-%     0.3000    10.0000     0.0400
-%     
-%     0.3000    10.0000     0.0400
-%     0.3000    10.0000     0.0400
-% ];
-
 combinations = [
     0.3000    10.0000     0.0400
-    0.3000    30.0000     0.0400
-    0.3000    10.0000     0.0180
-    0.3000    30.0000     0.0180
+    0.3000    10.0000     0.0400
+    0.3000    10.0000     0.0400
+    0.3000    10.0000     0.0400
     
-    0.1000    10.0000     0.0180
-    0.1000    30.0000     0.0180
+    0.3000    10.0000     0.0400
+    0.3000    10.0000     0.0400
 ];
+
 
 %  % 0.0800    20.0000    0.0220
 %     % 0.0800    30.0000    0.0250
@@ -322,8 +313,8 @@ rewardConfig.g2                = 1.5; % 0.3 % LC
 % rewardConfig.g2                = 1.5; % 0.3 % LC
 
 % Values set accrding to the values obtained from calibration
-fixationScreenConfig.fixationWinTolerance = 0.80; % 0.75 % Radius: Based on the mean err in degree obtained from calibration
-responseScreenConfig.responseArcTolerance = 1; % 1    % Radius: Based on the mean err in degree obtained from calibration = diameter = 2*maxErr
+fixationScreenConfig.fixationWinTolerance = 0.75; % Radius: Based on the mean err in degree obtained from calibration
+responseScreenConfig.responseArcTolerance = 1;    % Radius: Based on the mean err in degree obtained from calibration = diameter = 2*maxErr
 responseScreenConfig.arcRadius1           = 4.5;
 responseScreenConfig.arcRadius2           = 4.5 + 2*responseScreenConfig.responseArcTolerance + 0.3; % set this according to the calibrtion error
 responseScreenConfig.switchRespAcs        = true; %true
