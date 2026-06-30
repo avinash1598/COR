@@ -307,8 +307,8 @@ combinations = [
 
 % Jannelly (Cc peaks at 0.5, max reward 133)
 rewardConfig.maxTolerableError = 25; %30; %36;
-rewardConfig.y1                = 15; %15 17; %18;
-rewardConfig.x1                = 14; %14 16;
+rewardConfig.y1                = 13; %15 17; %18;
+rewardConfig.x1                = 11; %14 16;
 rewardConfig.c1                = 0.15;
 rewardConfig.g1                = 0.5; %0.8 1, 1.2; %1.2; % 0.3 % HC
 rewardConfig.g2                = 1.5; % 0.3 % LC
